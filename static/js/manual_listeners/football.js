@@ -93,7 +93,9 @@ const updateScoreLogic = (id, value, score) => {
   } else if (id === "game_seconds") {
     score.clock.seconds = Math.min(Math.max(value, 0), 59);
   } else if (id === "down") {
-
+    score.down = Math.min(Math.max(parseInt(value), 1), 4);
+  } else if (id === "yards_to_go") {
+    score.yards_to_go = Math.max(parseInt(value), 0);
   } else {
     score[id] = Math.max(parseInt(value), 0);
   }
