@@ -5,9 +5,11 @@ from services.utils import get_scoreboard_preferences, write_scorebaord_preferen
 from services.synced_service import connect_to_server, receive_rtd, RtdParser
 
 scoreboards = ['baseball', 'basketball', 'football']
-scoreboard_modes = {'baseball': {'synced': False, 'manual': True},
-                    'basketball': {'synced': True, 'manual': True},
-                    'football': {'synced': False, 'manual': True}}
+scoreboard_modes = {
+    'baseball': {'synced': True, 'manual': True},
+    'basketball': {'synced': True, 'manual': True},
+    'football': {'synced': True, 'manual': True},
+}
 global_scoreboard_data = {}
 
 
@@ -38,6 +40,7 @@ class ScoreboardService(threading.Thread):
         self.scoreboard_name = scoreboard_name
         self.running = True
         self.parser = None
+        self.status = "stopped"
 
     def update_scoreboard_data(self, new_data):
         global global_scoreboard_data
@@ -46,6 +49,9 @@ class ScoreboardService(threading.Thread):
     def get_scoreboard_data(self):
         global global_scoreboard_data
         return global_scoreboard_data
+
+    def get_status(self):
+        return self.status
 
     def run(self):
         global global_scoreboard_data
@@ -57,7 +63,7 @@ class ScoreboardService(threading.Thread):
                     print(f"Connecting to {self.ip}:{self.port}")
                     self.status = "connecting"
                     with connect_to_server(self.ip, self.port) as tcp_socket:
-                        self.staus = "connected"
+                        self.status = "connected"
                         print(f"Connected to {self.ip}:{self.port}")
                         
                         while True:
@@ -72,15 +78,18 @@ class ScoreboardService(threading.Thread):
                     print(f"Failed to connect to {self.ip}:{self.port}")
                 time.sleep(1)
         else:
+            self.status = "manual"
             while self.running:
-                pass
+                time.sleep(0.1)
 
     def stop(self):
         global global_scoreboard_data
         global_scoreboard_data = {}
         self.running = False
+        self.status = "stopped"
 
     def mock_score_update(self):
         return {"home": 10, "away": 15}
+
 
 active_thread: ScoreboardService = None

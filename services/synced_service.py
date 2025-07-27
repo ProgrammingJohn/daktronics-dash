@@ -40,6 +40,26 @@ class SportsPresets:
         'period': 1,
         'main_clock': '0:00'
     }
+    baseball_preset = {
+        'home_score': 0,
+        'away_score': 0,
+        'inning_text': 'top 1',
+        'strikes_and_balls': '0 - 0',
+        'out_text': '0 outs',
+        'base_one': False,
+        'base_two': False,
+        'base_three': False,
+    }
+    football_preset = {
+        'home_score': 0,
+        'away_score': 0,
+        'clock': '0:00',
+        'period': 1,
+        'down': 1,
+        'yards_to_go': 10,
+        'home_timeouts': 3,
+        'away_timeouts': 3,
+    }
 
 class RtdParser:
     def __init__(self, sport):
@@ -50,6 +70,8 @@ class RtdParser:
             return self.parse_basketball(rtd)
         elif self.sport == "baseball":
             return self.parse_baseball(rtd)
+        elif self.sport == "football":
+            return self.parse_football(rtd)
         else:
             raise ValueError("Unsupported sport")
     
@@ -83,4 +105,54 @@ class RtdParser:
             'home_timeouts': home_timeouts,
             'away_timeouts': away_timeouts,
             'period': period
+        }
+
+    def parse_baseball(self, rtd):
+        try:
+            parts = rtd.split(',')
+            home_score = parts[0]
+            away_score = parts[1]
+            inning = parts[2]
+            half = parts[3]
+            strikes = parts[4]
+            balls = parts[5]
+            outs = parts[6]
+            bases = parts[7:10]
+        except Exception:
+            return SportsPresets.baseball_preset
+
+        return {
+            'home_score': home_score or SportsPresets.baseball_preset['home_score'],
+            'away_score': away_score or SportsPresets.baseball_preset['away_score'],
+            'inning_text': f"{half} {inning}",
+            'strikes_and_balls': f"{balls} - {strikes}",
+            'out_text': f"{outs} outs",
+            'base_one': bases[0] == '1' if len(bases) > 0 else False,
+            'base_two': bases[1] == '1' if len(bases) > 1 else False,
+            'base_three': bases[2] == '1' if len(bases) > 2 else False,
+        }
+
+    def parse_football(self, rtd):
+        try:
+            parts = rtd.split(',')
+            clock = parts[0]
+            home_score = parts[1]
+            away_score = parts[2]
+            period = parts[3]
+            down = parts[4]
+            yards = parts[5]
+            home_timeouts = parts[6]
+            away_timeouts = parts[7]
+        except Exception:
+            return SportsPresets.football_preset
+
+        return {
+            'clock': clock or SportsPresets.football_preset['clock'],
+            'home_score': home_score or SportsPresets.football_preset['home_score'],
+            'away_score': away_score or SportsPresets.football_preset['away_score'],
+            'period': int(period) if period else SportsPresets.football_preset['period'],
+            'down': int(down) if down else SportsPresets.football_preset['down'],
+            'yards_to_go': int(yards) if yards else SportsPresets.football_preset['yards_to_go'],
+            'home_timeouts': int(home_timeouts) if home_timeouts else SportsPresets.football_preset['home_timeouts'],
+            'away_timeouts': int(away_timeouts) if away_timeouts else SportsPresets.football_preset['away_timeouts'],
         }

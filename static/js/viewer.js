@@ -33,7 +33,7 @@ $(document).ready(async () => {
     } else if (scoreboardName == "basketball") {
       updateSVGScorePreviewBaketball(score);
     } else if (scoreboardName == "football") {
-      updateSVGScorePreviewFootball;
+      updateSVGScorePreviewFootball(score);
     }
   }, 1000);
 });
