@@ -1,0 +1,5 @@
+rtd-reference.pdf
+.env
+.DS_Store
+*.pyc
+*.cpython__pycache__/

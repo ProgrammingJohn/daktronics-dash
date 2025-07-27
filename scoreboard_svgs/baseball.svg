@@ -1,0 +1,255 @@
+<svg
+  width="510"
+  height="254"
+  viewBox="0 0 510 254"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <style>
+    @font-face {
+      font-family: Lemonmilk;
+      src: url(/static/fonts/LEMONMILK-Medium.otf);
+    }
+    :root {
+      --away_team_text: #004285;
+      --home_team_text: #ffffff;
+      --away_team_light: #dcdcdc;
+      --away_team_dark: #b2b2b2;
+      --home_team_light: #919191;
+      --home_team_dark: #004285;
+    }
+    svg {
+      font-family: Lemonmilk;
+      font-weight: lighter;
+    }
+
+    #HomeTimeoutIndicator,
+    #AwayTimeoutIndicator {
+      translate: translateY(0%);
+      transition: transform 0.5s;
+    }
+    #HomeTimeoutIndicator.hide,
+    #AwayTimeoutIndicator.hide {
+      transform: translateY(5%);
+    }
+  </style>
+  <g id="baseball" clip-path="url(#clip0_10_39)">
+    <g id="Frame_1">
+      <path
+        id="Rectangle_4"
+        d="M0 22.1673C0 14.3164 0 10.6218 1.39091 7.38909C2.78182 4.61818 4.63636 2.77091 7.41818 1.38545C10.6636 0 14.3727 0 22.2545 0H487.745C495.627 0 499.336 0 502.582 1.38545C505.364 2.77091 507.218 4.61818 508.609 7.38909C510 10.16 510 14.3164 510 22.1673V184.727H0V22.1673Z"
+        fill="url(#paint0_linear_10_39)"
+      />
+      <path
+        id="Rectangle_5"
+        d="M0 184.727H510V231.833C510 239.684 510 243.378 508.609 246.611C507.218 249.382 505.364 251.229 502.582 252.615C499.8 254 495.627 254 487.745 254H22.2545C14.3727 254 10.6636 254 7.41818 252.615C4.63636 251.229 2.78182 249.382 1.39091 246.611C0 243.378 0 239.684 0 231.833V184.727Z"
+        fill="url(#paint1_linear_10_39)"
+      />
+
+      <g id="Bases">
+        <path
+          id="base_two"
+          d="M390.118 94.7091L416.546 68.3855C418.4 66.5382 421.182 66.5382 423.036 68.3855L449.464 94.7091C451.318 96.5564 451.318 99.3273 449.464 101.175L423.036 127.498C421.182 129.345 418.4 129.345 416.546 127.498L390.118 101.175C388.264 99.3273 388.264 96.5564 390.118 94.7091Z"
+          fill="white"
+        />
+        <path
+          id="base_one"
+          d="M431.845 136.273L458.273 109.949C460.127 108.102 462.909 108.102 464.764 109.949L491.191 136.273C493.046 138.12 493.046 140.891 491.191 142.738L464.764 169.062C462.909 170.909 460.127 170.909 458.273 169.062L431.845 142.738C429.991 140.891 429.991 138.12 431.845 136.273Z"
+          fill="white"
+        />
+        <path
+          id="base_three"
+          d="M348.391 136.273L374.818 109.949C376.673 108.102 379.455 108.102 381.309 109.949L407.736 136.273C409.591 138.12 409.591 140.891 407.736 142.738L381.309 169.062C379.455 170.909 376.673 170.909 374.818 169.062L348.391 142.738C346.536 140.891 346.536 138.12 348.391 136.273Z"
+          fill="white"
+        />
+      </g>
+      <text
+        id="inning_text"
+        fill="white"
+        x="418"
+        y="50"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="30"
+        font-weight="light"
+        letter-spacing="0em"
+        text-anchor="middle"
+      >
+        Top 1
+      </text>
+      <text
+        id="strikes_and_balls"
+        fill="white"
+        x="55"
+        y="230"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="30"
+        font-weight="light"
+        letter-spacing="0em"
+        text-anchor="middle"
+      >
+        0 - 0
+      </text>
+      <text
+        id="out_text"
+        fill="white"
+        x="418"
+        y="230"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="30"
+        font-weight="light"
+        letter-spacing="0em"
+        text-anchor="middle"
+      >
+        0 outs
+      </text>
+
+      <path
+        id="Rectangle_2"
+        d="M0 22.1673C0 14.3164 0 10.6218 1.39091 7.38909C2.78182 4.61818 4.63636 2.77091 7.41818 1.38545C10.6636 0 14.3727 0 22.2545 0H324.545V92.3636H0V22.1673Z"
+        fill="url(#paint2_linear_10_39)"
+      />
+
+      <text
+        id="away_team_name"
+        fill="var(--away_team_text)"
+        x="23.1819"
+        y="60"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="50"
+        font-weight="bold"
+        letter-spacing="0.05em"
+        text-anchor="left"
+      >
+        home
+      </text>
+
+      <path
+        id="border2"
+        d="M104.318 254V184.727"
+        stroke="#575757"
+        stroke-width="5"
+      />
+      <path
+        id="border1"
+        d="M322.227 254V170.873"
+        stroke="#575757"
+        stroke-width="5"
+      />
+      <path
+        id="border"
+        d="M310.636 182.418H510"
+        stroke="#575757"
+        stroke-width="5"
+      />
+
+      <path
+        id="Rectangle_1"
+        d="M0 92.3636H324.545V170.873C324.545 178.724 318.518 184.727 310.636 184.727H0V92.3636Z"
+        fill="url(#paint3_linear_10_39)"
+      />
+      <g id="Darkness" style="mix-blend-mode: color-burn" opacity="0.2">
+        <path
+          d="M216 0H325V170C325 178.284 318.284 185 310 185H216V0Z"
+          fill="black"
+        />
+      </g>
+      <text
+        id="away_score"
+        fill="var(--away_team_text)"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="58"
+        font-weight="bold"
+        letter-spacing="0em"
+        text-anchor="middle"
+        x="275"
+        y="65"
+      >
+        0
+      </text>
+
+      <text
+        id="home_team_name"
+        fill="var(--home_team_text)"
+        x="23.1819"
+        y="160"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="50"
+        font-weight="light"
+        letter-spacing="0.05em"
+        text-anchor="left"
+      >
+        away
+      </text>
+      <text
+        id="home_score"
+        fill="var(--home_team_text)"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="58"
+        font-weight="bold"
+        letter-spacing="0em"
+        text-anchor="middle"
+        x="275"
+        y="160"
+      >
+        0
+      </text>
+    </g>
+  </g>
+
+  <defs>
+    <linearGradient
+      id="paint0_linear_10_39"
+      x1="255"
+      y1="0"
+      x2="255"
+      y2="184.727"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#575757" />
+      <stop offset="1" stop-color="#474747" />
+    </linearGradient>
+    <linearGradient
+      id="paint1_linear_10_39"
+      x1="255"
+      y1="184.727"
+      x2="255"
+      y2="254"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="#474747" />
+      <stop offset="1" stop-color="#575757" />
+    </linearGradient>
+    <linearGradient
+      id="paint2_linear_10_39"
+      x1="162.273"
+      y1="0"
+      x2="162.273"
+      y2="92.3636"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--away_team_light)" />
+      <stop offset="1" stop-color="var(--away_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint3_linear_10_39"
+      x1="162.273"
+      y1="92.3636"
+      x2="162.273"
+      y2="184.727"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--home_team_light)" />
+      <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+    <clipPath id="clip0_10_39">
+      <rect width="510" height="254" fill="white" />
+    </clipPath>
+  </defs>
+</svg>

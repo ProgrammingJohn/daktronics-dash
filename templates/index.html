@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>DakDash</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+  </head>
+  <body>
+    <h2 style="text-align: center">DakDash</h2>
+
+    <div id="progress-bar">
+      <div class="step" data-step="1">1</div>
+      <div class="step" data-step="2">2</div>
+      <div class="step" data-step="3">3</div>
+      <div class="step" data-step="4">4</div>
+    </div>
+
+    <div id="wizard-container">
+      <div id="wizard_step1" class="wizard-step" hidden>
+        {% include 'wizard_step1.html' %}
+      </div>
+      <div id="wizard_step2" class="wizard-step" hidden>
+        {% include 'wizard_step2.html' %}
+      </div>
+      <div id="wizard_step2a" class="wizard-step" hidden>
+        {% include 'wizard_step2a.html' %}
+      </div>
+      <div id="wizard_step3" class="wizard-step" hidden>
+        {% include 'wizard_step3.html' %}
+      </div>
+      <div id="wizard_step4_manual" class="wizard-step" hidden>
+        {% include 'wizard_step4_manual.html' %}
+      </div>
+      <div id="wizard_step4_synced" class="wizard-step" hidden>
+        {% include 'wizard_step4_synced.html' %}
+      </div>
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="/static/js/state.js"></script>
+    <script type="module" src="/static/js/api.js"></script>
+    <script type="module" src="/static/js/wizard/index.js"></script>
+  </body>
+</html>

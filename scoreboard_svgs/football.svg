@@ -1,0 +1,319 @@
+<svg
+  width="1485"
+  height="127"
+  viewBox="0 0 1485 127"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <style>
+    @font-face {
+      font-family: Lemonmilk;
+      src: url(/static/fonts/LEMONMILK-Medium.otf);
+    }
+    :root {
+      --away_team_text: #004285;
+      --home_team_text: #ffffff;
+      --away_team_light: #dcdcdc;
+      --away_team_dark: #b2b2b2;
+      --home_team_light: #919191;
+      --home_team_dark: #004285;
+    }
+    svg {
+      font-family: Lemonmilk;
+      font-weight: lighter;
+    }
+
+    #HomeTimeoutIndicator,
+    #AwayTimeoutIndicator {
+      translate: translateY(0%);
+      transition: transform 0.5s;
+    }
+    #HomeTimeoutIndicator.hide,
+    #AwayTimeoutIndicator.hide {
+      transform: translateY(5%);
+    }
+  </style>
+  <g id="football 1">
+    <g id="Football Scoreboard">
+      <path
+        id="Base"
+        d="M0 53C0 44.716 6.716 38 15 38H1470C1478.28 38 1485 44.716 1485 53V112C1485 120.28 1478.28 127 1470 127H15C6.716 127 0 120.28 0 112V53Z"
+        fill="#474747"
+      />
+      <g id="AwayRegion">
+        <g id="AwayTimeoutIndicator">
+          <path
+            id="Vector"
+            d="M461 15C461 6.716 467.716 0 476 0H778C786.28 0 793 6.716 793 15V40H461V15Z"
+            fill="url(#paint0_linear_1_2)"
+          />
+          <text
+            id="TIMEOUT"
+            fill="var(--away_team_text)"
+            xml:space="preserve"
+            style="white-space: normal"
+            font-size="30"
+            font-weight="bold"
+            letter-spacing="0em"
+            text-anchor="middle"
+            x="630"
+            y="30.9091"
+          >
+            TIMEOUT
+          </text>
+        </g>
+        <path
+          id="AwayLight"
+          d="M461 38.579H778C786.28 38.579 793 45.295 793 53.579V112C793 120.28 786.28 127 778 127H461V38.579Z"
+          fill="url(#paint1_linear_1_2)"
+        />
+        <g id="AwayDark" style="mix-blend-mode: color-burn" opacity="0.2">
+          <path
+            id="Vector_2"
+            d="M667 38.579H778C786.28 38.579 793 45.295 793 53.579V112C793 120.28 786.28 127 778 127H667V38.579Z"
+            fill="black"
+          />
+        </g>
+        <text
+          id="away_team_name"
+          fill="var(--away_team_text)"
+          x="475"
+          y="98"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="50"
+          font-weight="light"
+          letter-spacing="0.05em"
+          text-anchor="left"
+        >
+          away
+        </text>
+        <text
+          id="away_score"
+          fill="var(--away_team_text)"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="58"
+          font-weight="bold"
+          letter-spacing="0em"
+          text-anchor="middle"
+          x="735"
+          y="104.701"
+        >
+          0
+        </text>
+        <g id="AwayTimeouts">
+          <path
+            id="away_timeouts_t3"
+            d="M593.418 114.5H646.256V120.75H593.418V114.5Z"
+            fill="var(--away_team_text)"
+          />
+          <path
+            id="away_timeouts_t2"
+            d="M534.709 114.5H587.547V120.75H534.709V114.5Z"
+            fill="var(--away_team_text)"
+          />
+          <path
+            id="away_timeouts_t1"
+            d="M476 114.5H528.838V120.75H476V114.5Z"
+            fill="var(--away_team_text)"
+          />
+        </g>
+      </g>
+      <g id="HomeRegion">
+        <g id="HomeTimeoutIndicator">
+          <path
+            id="Vector_3"
+            d="M129 15C129 6.716 135.716 0 144 0H446C454.284 0 461 6.716 461 15V40H129V15Z"
+            fill="url(#paint2_linear_1_2)"
+          />
+          <text
+            id="TIMEOUT_2"
+            fill="var(--home_team_text)"
+            xml:space="preserve"
+            style="white-space: normal"
+            font-size="30"
+            font-weight="bold"
+            letter-spacing="0em"
+            text-anchor="middle"
+            x="298.171"
+            y="30.9091"
+          >
+            timeout
+          </text>
+        </g>
+        <path
+          id="HomeLight"
+          d="M129 53.579C129 45.295 135.716 38.579 144 38.579H461V127H144C135.716 127 129 120.28 129 112V53.579Z"
+          fill="url(#paint3_linear_1_2)"
+        />
+        <g id="HomeDark" style="mix-blend-mode: color-burn" opacity="0.2">
+          <path
+            id="Vector_4"
+            d="M336 38.579H461V127H336V38.579Z"
+            fill="black"
+          />
+        </g>
+        <text
+          id="home_team_name"
+          fill="var(--home_team_text)"
+          x="145"
+          y="98"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="50"
+          font-weight="light"
+          letter-spacing="0.05em"
+          text-anchor="left"
+        >
+          home
+        </text>
+        <text
+          id="home_score"
+          fill="var(--home_team_text)"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="58"
+          font-weight="bold"
+          letter-spacing="0em"
+          text-anchor="middle"
+          x="402"
+          y="104.701"
+        >
+          0
+        </text>
+        <g id="HomeTimeouts">
+          <path
+            id="home_timeouts_t3"
+            d="M262.241 114.5H315V120.75H262.241V114.5Z"
+            fill="var(--home_team_text)"
+          />
+          <path
+            id="home_timeouts_t2"
+            d="M203.621 114.5H256.379V120.75H203.621V114.5Z"
+            fill="var(--home_team_text)"
+          />
+          <path
+            id="home_timeouts_t1"
+            d="M145 114.5H197.759V120.75H145V114.5Z"
+            fill="var(--home_team_text)"
+          />
+        </g>
+      </g>
+      <g id="StatRegion">
+        <path
+          id="TimeRegion"
+          opacity="0.5"
+          d="M962 53C962 44.716 968.72 38 977 38H1157V127H977C968.72 127 962 120.28 962 112V53Z"
+          fill="black"
+        />
+        <text
+          id="clock"
+          fill="white"
+          x="1065"
+          y="102"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="50"
+          font-weight="bold"
+          letter-spacing="0em"
+          text-anchor="middle"
+        >
+          0:00
+        </text>
+        <text
+          id="period"
+          fill="white"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="50"
+          font-weight="light"
+          letter-spacing="0em"
+          text-anchor="middle"
+          x="883"
+          y="101.322"
+        >
+          1st
+        </text>
+      </g>
+      <g id="DownGroup">
+        <path
+          id="DownRegion"
+          d="M1157 38H1470C1478.28 38 1485 44.716 1485 53V112C1485 120.28 1478.28 127 1470 127H1157V38Z"
+          fill="url(#paint4_linear_1_2)"
+        />
+        <text
+          id="down_text"
+          fill="white"
+          xml:space="preserve"
+          style="white-space: normal"
+          font-size="50"
+          font-weight="light"
+          letter-spacing="0em"
+          x="1320"
+          y="101.322"
+          text-anchor="middle"
+        >
+          2ND &#38; 5
+        </text>
+      </g>
+    </g>
+  </g>
+  <defs>
+    <linearGradient
+      id="paint0_linear_1_2"
+      x1="295"
+      y1="0"
+      x2="295"
+      y2="40"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--away_team_light)" />
+      <stop offset="1" stop-color="var(--away_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint1_linear_1_2"
+      x1="627"
+      y1="40"
+      x2="627"
+      y2="122"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--away_team_light)" />
+      <stop offset="1" stop-color="var(--away_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint2_linear_1_2"
+      x1="295"
+      y1="0"
+      x2="295"
+      y2="40"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--home_team_light)" />
+      <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint3_linear_1_2"
+      x1="1321"
+      y1="40"
+      x2="1321"
+      y2="122"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--home_team_light)" />
+      <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint4_linear_1_2"
+      x1="1321"
+      y1="40"
+      x2="1321"
+      y2="122"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--home_team_light)" />
+      <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+  </defs>
+</svg>

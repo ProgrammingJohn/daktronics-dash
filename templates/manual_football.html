@@ -1,0 +1,135 @@
+<div class="game-clock">
+  <fieldset style="align-items: inline-center">
+    <legend style="margin-right: 10px">Game Clock</legend>
+    <div style="display: inline-flex; gap: 10px">
+      <input
+        class="scoreboard-input"
+        type="number"
+        id="game_minutes"
+        name="game_minutes"
+        min="0"
+        max="59"
+        value="0"
+        style="width: 80px"
+      />
+      <label for="game_seconds" style="margin-left: 10px">:</label>
+      <input
+        class="scoreboard-input"
+        type="number"
+        id="game_seconds"
+        name="game_seconds"
+        min="0"
+        max="59"
+        value="0"
+        style="width: 80px"
+      />
+    </div>
+    <div style="display: flex; gap: 10px">
+      <button id="start_clock" class="clock-button">
+        Start
+        <small style="display: inline-block; margin-top: 5px">(Key: [)</small>
+      </button>
+      <button id="stop_clock" class="clock-button">
+        Stop
+        <small style="display: inline-block; margin-top: 5px">(Key: ])</small>
+      </button>
+    </div>
+    <label for="period">Period:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="period"
+      name="period"
+      min="0"
+      max="99"
+      value="0"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: P)</small>
+    <div style="display: inline-flex; gap: 10px">
+      <label for="down" style="margin-left: 10px">Down</label>
+      <input
+        class="scoreboard-input"
+        type="number"
+        id="down"
+        name="down"
+        min="1"
+        max="4"
+        value="1"
+        style="width: 80px"
+      />
+      <label for="yards_to_go" style="margin-left: 10px">Yards to Go</label>
+      <input
+        class="scoreboard-input"
+        type="number"
+        id="yards_to_go"
+        name="yards_to_go"
+        min="1"
+        max="100"
+        value="1"
+        style="width: 80px"
+      />
+    </div>
+  </fieldset>
+</div>
+<div class="team-fieldsets">
+  <fieldset>
+    <legend>Home Team</legend>
+    <label for="home_score">Current Score:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="home_score"
+      name="home_score"
+      min="0"
+      max="999"
+      value="0"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: H)</small>
+
+    <label for="home_timeouts">Timeouts:</label>
+    <input
+      class="scoreboard-input inline-inner-container"
+      type="number"
+      id="home_timeouts"
+      name="home_timeouts"
+      min="0"
+      max="5"
+      value="5"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: T)</small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Away Team</legend>
+    <label for="away_score">Current Score:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="away_score"
+      name="away_score"
+      min="0"
+      max="999"
+      value="0"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: A)</small>
+    <label for="away_timeouts">Timeouts:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="away_timeouts"
+      name="away_timeouts"
+      min="0"
+      max="5"
+      value="5"
+    />
+
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: Y)</small>
+  </fieldset>
+</div>
+
+<div class="controls"></div>

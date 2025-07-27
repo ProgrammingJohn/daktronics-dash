@@ -1,0 +1,126 @@
+<div class="team-fieldsets">
+  <fieldset>
+    <legend>Home Team</legend>
+    <label for="home_score">Current Score:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="home_score"
+      name="home_score"
+      min="0"
+      max="99"
+      value="0"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: H)</small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Away Team</legend>
+    <label for="away_score">Current Score:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="away_score"
+      name="away_score"
+      min="0"
+      max="99"
+      value="0"
+    />
+    <br />
+    <small style="display: inline-block; margin-top: 5px">(Key: A)</small>
+  </fieldset>
+</div>
+
+<div class="controls">
+  <div>
+    <label for="innings">Innings:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="innings"
+      name="innings"
+      min="1"
+      value="1"
+    />
+  </div>
+  <div>
+    <label for="inning_half">Top/Bottom of Inning:</label>
+    <select class="scoreboard-input" id="inning_half" name="inning-half">
+      <option value="top">Top</option>
+      <option value="bot">Bottom</option>
+    </select>
+  </div>
+  <div>
+    <label for="outs">Outs:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="outs"
+      name="outs"
+      min="0"
+      max="4"
+      value="0"
+    />
+  </div>
+  <div>
+    <label for="strikes">Strikes:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="strikes"
+      name="strikes"
+      min="0"
+      max="4"
+      value="0"
+    />
+  </div>
+  <div>
+    <label for="balls">Balls:</label>
+    <input
+      class="scoreboard-input"
+      type="number"
+      id="balls"
+      name="balls"
+      min="0"
+      max="5"
+      value="0"
+    />
+  </div>
+</div>
+<div class="inline-container">
+  <small>(Key: I)</small>
+  <small>(Key: T)</small>
+  <small>(Key: O)</small>
+  <small>(Key: S)</small>
+  <small>(Key: B)</small>
+</div>
+
+<div class="inline-container">
+  <button
+    class="scoreboard-input inline-inner-container"
+    type="button"
+    id="base_one"
+  >
+    Base 1
+  </button>
+  <button
+    class="scoreboard-input inline-inner-container"
+    type="button"
+    id="base_two"
+  >
+    Base 2
+  </button>
+  <button
+    class="scoreboard-input inline-inner-container"
+    type="button"
+    id="base_three"
+  >
+    Base 3
+  </button>
+</div>
+<div class="inline-container">
+  <small>(Key: 1)</small>
+  <small>(Key: 2)</small>
+  <small>(Key: 3)</small>
+</div>

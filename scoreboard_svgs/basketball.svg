@@ -1,0 +1,344 @@
+<svg
+  width="761"
+  height="101"
+  viewBox="0 0 761 101"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <style>
+    @font-face {
+      font-family: Lemonmilk;
+      src: url(/static/fonts/LEMONMILK-Medium.otf);
+    }
+    :root {
+      --away_team_text: #004285;
+      --home_team_text: #ffffff;
+      --away_team_light: #dcdcdc;
+      --away_team_dark: #b2b2b2;
+      --home_team_light: #919191;
+      --home_team_dark: #004285;
+    }
+    svg {
+      font-family: Lemonmilk;
+      font-weight: lighter;
+    }
+  </style>
+  <g id="Basketball Scoreboard" clip-path="url(#clip0_1_38)">
+    <g id="Base" filter="url(#filter0_d_1_38)">
+      <rect width="761" height="89" rx="15" fill="#474747" />
+    </g>
+    <g id="AwayRegion">
+      <path
+        id="AwayLight"
+        d="M466 0H746C754.284 0 761 6.71573 761 15V74C761 82.2843 754.284 89 746 89H466V0Z"
+        fill="url(#paint0_linear_1_38)"
+      />
+      <g id="AwayDark" style="mix-blend-mode: color-burn" opacity="0.2">
+        <path
+          d="M466 0H563C571.284 0 578 6.71573 578 15V74C578 82.2843 571.284 89 563 89H466V0Z"
+          fill="black"
+        />
+      </g>
+      <text
+        id="away_team_name"
+        
+        fill="var(--away_team_text)"
+        x="750"
+        y="55"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="42"
+        font-weight="light"
+        letter-spacing="0.05em"
+        text-anchor="end"
+      >
+        away
+      </text>
+      <text
+        id="away_fouls"
+        fill="var(--away_team_text)"
+        x="750"
+        y="75"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="13"
+        font-weight="light"
+        letter-spacing="0.05em"
+        text-anchor="end"
+      >
+        0 FOULS
+      </text>
+      <g id="AwayTimeouts">
+        <ellipse
+          id="away_timeouts_t1"
+          cx="595"
+          cy="75"
+          rx="5.42707"
+          ry="4.94444"
+          fill="white"
+        />
+        <ellipse
+          id="away_timeouts_t2"
+          cx="595"
+          cy="60"
+          rx="5.42707"
+          ry="4.94444"
+          fill="white"
+        />
+        <ellipse
+          id="away_timeouts_t3"
+          cx="595"
+          cy="45"
+          rx="5.42707"
+          ry="4.94444"
+          fill="white"
+        />
+        <ellipse
+          id="away_timeouts_t4"
+          cx="594.932"
+          cy="30"
+          rx="5.42707"
+          ry="4.94444"
+          fill="white"
+        />
+        <ellipse
+          id="away_timeouts_t5"
+          cx="594.932"
+          cy="15"
+          rx="5.42707"
+          ry="4.94444"
+          fill="white"
+        />
+      </g>
+    </g>
+    <text
+      id="away_score"
+      fill="var(--away_team_text)"
+      x="525"
+      y="65"
+      xml:space="preserve"
+      style="white-space: normal"
+      font-size="55"
+      font-weight="light"
+      letter-spacing="0em"
+      text-anchor="middle"
+    >
+      0
+    </text>
+    <g id="HomeRegion">
+      <path
+        id="HomeLight"
+        d="M0 15C0 6.71573 6.71573 0 15 0H295V89H15C6.71573 89 0 82.2843 0 74V15Z"
+        fill="url(#paint1_linear_1_38)"
+      />
+      <g id="HomeDark" style="mix-blend-mode: color-burn" opacity="0.2">
+        <path
+          d="M183.743 15C183.743 6.71573 190.459 0 198.743 0H295V89H198.743C190.459 89 183.743 82.2843 183.743 74V15Z"
+          fill="black"
+        />
+      </g>
+      <text
+        id="home_team_name"
+        fill="var(--home_team_text)"
+        x="18"
+        y="55"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="42"
+        font-weight="light"
+        letter-spacing="0.05em"
+        text-anchor="start"
+      >
+        home
+      </text>
+      <text
+        id="home_score"
+        fill="var(--home_team_text)"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="55"
+        x="238"
+        y="65"
+        font-weight="bold"
+        letter-spacing="0em"
+        text-anchor="middle"
+      >
+        0
+      </text>
+      <text
+        id="home_fouls"
+        fill="var(--home_team_text)"
+        x="18"
+        y="75"
+        xml:space="preserve"
+        style="white-space: normal"
+        font-size="13"
+        font-weight="light"
+        letter-spacing="0.05em"
+        text-anchor="start"
+      >
+        0 FOULS
+      </text>
+      <g id="HomeTimeouts">
+        <ellipse
+          id="home_timeouts_t5"
+          cx="166.068"
+          cy="15"
+          rx="5.42707"
+          ry="5"
+          fill="white"
+        />
+        <ellipse
+          id="home_timeouts_t3"
+          cx="166.068"
+          cy="45"
+          rx="5.42707"
+          ry="5"
+          fill="white"
+        />
+        <ellipse
+          id="home_timeouts_t2"
+          cx="166.068"
+          cy="60"
+          rx="5.42707"
+          ry="5"
+          fill="white"
+        />
+        <ellipse
+          id="home_timeouts_t4"
+          cx="166.068"
+          cy="30"
+          rx="5.42707"
+          ry="5"
+          fill="white"
+        />
+        <ellipse
+          id="home_timeouts_t1"
+          cx="166.068"
+          cy="75"
+          rx="5.42707"
+          ry="5"
+          fill="white"
+        />
+      </g>
+    </g>
+    <text
+      id="home_bonus_tag"
+      x="310"
+      y="76"
+      fill="#FDC11D"
+      xml:space="preserve"
+      style="white-space: normal; display: none"
+      font-family="Tahoma"
+      font-size="20"
+      font-weight="bold"
+      letter-spacing="0.05em"
+    >
+      B
+    </text>
+    <text
+      id="clock"
+      fill="white"
+      x="383"
+      y="41.3789"
+      xml:space="preserve"
+      style="white-space: normal"
+      font-size="40"
+      font-weight="bold"
+      letter-spacing="0.05em"
+      text-anchor="middle"
+    >
+      0:00
+    </text>
+    <text
+      id="away_bonus_tag"
+      x="440"
+      y="76"
+      fill="#FDC11D"
+      xml:space="preserve"
+      style="white-space: normal; display: none"
+      font-family="Tahoma"
+      font-size="20"
+      font-weight="bold"
+      letter-spacing="0.05em"
+    >
+      B
+    </text>
+    <text
+      id="period"
+      fill="#FDC11D"
+      x="380"
+      y="77.4092"
+      xml:space="preserve"
+      style="white-space: normal"
+      font-size="30"
+      font-weight="light"
+      letter-spacing="0.05em"
+      text-anchor="middle"
+    >
+      1st
+    </text>
+  </g>
+  <defs>
+    <filter
+      id="filter0_d_1_38"
+      x="-5"
+      y="0"
+      width="771"
+      height="99"
+      filterUnits="userSpaceOnUse"
+      color-interpolation-filters="sRGB"
+    >
+      <feFlood flood-opacity="0" result="BackgroundImageFix" />
+      <feColorMatrix
+        in="SourceAlpha"
+        type="matrix"
+        values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+        result="hardAlpha"
+      />
+      <feOffset dy="5" />
+      <feGaussianBlur stdDeviation="2.5" />
+      <feComposite in2="hardAlpha" operator="out" />
+      <feColorMatrix
+        type="matrix"
+        values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0"
+      />
+      <feBlend
+        mode="normal"
+        in2="BackgroundImageFix"
+        result="effect1_dropShadow_1_38"
+      />
+      <feBlend
+        mode="normal"
+        in="SourceGraphic"
+        in2="effect1_dropShadow_1_38"
+        result="shape"
+      />
+    </filter>
+    <linearGradient
+      id="paint0_linear_1_38"
+      x1="613.5"
+      y1="0"
+      x2="613.5"
+      y2="89"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--away_team_light)" />
+      <stop offset="1" stop-color="var(--away_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="paint1_linear_1_38"
+      x1="147.5"
+      y1="0"
+      x2="147.5"
+      y2="89"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--home_team_light)" />
+      <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+    <clipPath id="clip0_1_38">
+      <rect width="761" height="101" fill="white" />
+    </clipPath>
+  </defs>
+</svg>

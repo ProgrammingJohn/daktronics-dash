@@ -1,0 +1,48 @@
+:root {
+  --homeLight: #0066cc;
+  --homeDark: #004285;
+  --homeText: #fff;
+  --awayText: #fff;
+  --awayLight: #D11216;
+  --awayDark: #96150c;
+}
+
+@font-face {
+  font-family: Lemonmilk;
+  src: url(/static/fonts/LEMONMILK-Medium.otf);
+}
+body {
+  font-family: Lemonmilk;
+  font-weight: lighter;
+}
+
+#HomeTimeoutIndicator,
+#AwayTimeoutIndicator {
+  translate: translateY(0%);
+  transition: transform 0.5s;
+}
+#HomeTimeoutIndicator.hide,
+#AwayTimeoutIndicator.hide {
+  transform: translateY(5%);
+}
+
+.homeLight {
+  fill: var(--homeLight);
+}
+.homeDark {
+  fill: var(--homeDark);
+}
+.awayLight {
+  fill: var(--awayLight);
+}
+.awayDark {
+  fill: var(--awayDark);
+}
+.awayText {
+  fill: var(--awayText);
+  text-anchor: middle;
+}
+.homeText {
+  fill: var(--homeText);
+  text-anchor: middle;
+}
