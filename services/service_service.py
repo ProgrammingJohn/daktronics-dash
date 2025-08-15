@@ -66,7 +66,7 @@ class ScoreboardService(threading.Thread):
                         self.status = "connected"
                         print(f"Connected to {self.ip}:{self.port}")
                         
-                        while True:
+                        while self.running:
                             rtd = receive_rtd(tcp_socket)
                             print(rtd)
                             global_scoreboard_data = self.parser.parse(rtd) 
@@ -84,6 +84,7 @@ class ScoreboardService(threading.Thread):
 
     def stop(self):
         global global_scoreboard_data
+        print("scoreboard service stop call")
         global_scoreboard_data = {}
         self.running = False
         self.status = "stopped"

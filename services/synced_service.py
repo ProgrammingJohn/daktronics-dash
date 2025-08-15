@@ -9,21 +9,25 @@ def connect_to_server(ip, port):
 def receive_rtd(tcp_socket):
     """Receive a full message framed between 0x01 (start) and 0x04 (end)."""
     rtd = b''
+    tcp_socket.settimeout(5) # wait three seconds on .recv
     
     # Wait for start byte (0x01)
-    while True:
-        chunk = tcp_socket.recv(1024)
-        if b'\x01' in chunk:
-            rtd += chunk[chunk.index(b'\x01')+1:]
-            break
+    try:
+        while True:
+            chunk = tcp_socket.recv(1024)
+            if b'\x01' in chunk:
+                rtd += chunk[chunk.index(b'\x01')+1:]
+                break
 
-    # Read until end byte (0x04)
-    while True:
-        chunk = tcp_socket.recv(1024)
-        if b'\x04' in chunk:
-            rtd += chunk[:chunk.index(b'\x04')]
-            break
-        rtd += chunk
+        # Read until end byte (0x04)
+        while True:
+            chunk = tcp_socket.recv(1024)
+            if b'\x04' in chunk:
+                rtd += chunk[:chunk.index(b'\x04')]
+                break
+            rtd += chunk
+    except socket.timeout:
+        return None
     
     return rtd.decode()
 
