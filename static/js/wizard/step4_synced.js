@@ -14,15 +14,17 @@ import { updateSVGScorePreviewFootball } from "../manual_listeners/football.js";
 export const initStep4Synced = async () => {
   $(".wizard-step").hide();
   $("#wizard_step4_synced").show();
+  console.log("step 4 synced running")
   StateHandler.setState("currentProgressBarStep", 4);
   const scoreboard_name = StateHandler.getState("selectedScoreboard");
   const ipAddress = StateHandler.getState("ipAddress");
   const port = StateHandler.getState("port");
 
   const svg = await getScoreboardSVG(scoreboard_name);
+  console.log(svg)
   const prefs = await getScoreboardPreferences(scoreboard_name);
-  $("#svg-preview-score").html(svg);
-  const svgElement = $("#svg-preview-score svg");
+  $("#wizard_step4_synced #svg-preview-score").html(svg);
+  const svgElement = $("#wizard_step4_synced #svg-preview-score");
   const rootStyle = svgElement[0].style;
   for (const [key, value] of Object.entries(prefs)) {
     if (key === "home_team_name" || key === "away_team_name") {

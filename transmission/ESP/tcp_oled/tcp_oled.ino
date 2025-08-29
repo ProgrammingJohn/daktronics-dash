@@ -18,10 +18,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define ETH_RST_PIN     16
 #define ETH_TYPE        ETH_PHY_LAN8720
 
-// const char* ssid = "FTIS-WiFi";
-// const char* password = "@176FTIS3847!!";
-const char* ssid = "Roth Wi-Fi";
-const char* password = "60Avenelplace";
+const char* ssid = "FTIS-WiFi";
+const char* password = "@176FTIS3847!!";
+// const char* ssid = "Roth Wi-Fi";
+// const char* password = "60Avenelplace";
 
 
 WiFiServer tcpServer(1234);

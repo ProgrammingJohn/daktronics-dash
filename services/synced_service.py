@@ -57,13 +57,21 @@ class SportsPresets:
     football_preset = {
         'home_score': 0,
         'away_score': 0,
-        'clock': '0:00',
+        'clock': {'minutes': '00', 'seconds': '00'},
         'period': 1,
         'down': 1,
-        'yards_to_go': 10,
+        'yards': 10,
         'home_timeouts': 3,
         'away_timeouts': 3,
+        'home_possesion': True
     }
+def safe_parse(string: str, default: str, start_index: int, end_index: int = None):
+    if not end_index:
+        end_index = start_index + 1
+    try:
+        return string[start_index : end_index].strip()
+    except:
+        return default
 
 class RtdParser:
     def __init__(self, sport):
@@ -135,28 +143,41 @@ class RtdParser:
             'base_two': bases[1] == '1' if len(bases) > 1 else False,
             'base_three': bases[2] == '1' if len(bases) > 2 else False,
         }
-
+    
     def parse_football(self, rtd):
+        sport = SportsPresets.football_preset
+        
+        clock = safe_parse(rtd, {'minutes': '00', 'seconds': '00'}, 0, 5)
         try:
-            parts = rtd.split(',')
-            clock = parts[0]
-            home_score = parts[1]
-            away_score = parts[2]
-            period = parts[3]
-            down = parts[4]
-            yards = parts[5]
-            home_timeouts = parts[6]
-            away_timeouts = parts[7]
-        except Exception:
-            return SportsPresets.football_preset
+            clock = {'minutes': clock.split(':')[0], 'seconds': clock.split(':')[1]}
+        except:
+            clock = {'minutes': '00', 'seconds': '00'}
+        home_score = safe_parse(rtd, sport['home_score'], 25, 27)
+        away_score = safe_parse(rtd, sport['away_score'], 27, 29)
+        period = safe_parse(rtd, sport['period'], 29, 30)
+        down = safe_parse(rtd, sport['down'], 32, 33)
+        yards = safe_parse(rtd, sport['yards'], 33, 35)
+        home_timeouts = safe_parse(rtd, sport['home_timeouts'], 39, 40)
+        away_timeouts = safe_parse(rtd, sport['away_timeouts'], 40, 41)
+        home_possesion = safe_parse(rtd, sport['home_possesion'], 36, 37)
+        home_possesion = True if home_possesion == ">" else False
+        
+        print(clock, home_score, away_score, period, down, yards, home_timeouts, away_timeouts, home_possesion)
+
 
         return {
-            'clock': clock or SportsPresets.football_preset['clock'],
-            'home_score': home_score or SportsPresets.football_preset['home_score'],
-            'away_score': away_score or SportsPresets.football_preset['away_score'],
-            'period': int(period) if period else SportsPresets.football_preset['period'],
-            'down': int(down) if down else SportsPresets.football_preset['down'],
-            'yards_to_go': int(yards) if yards else SportsPresets.football_preset['yards_to_go'],
-            'home_timeouts': int(home_timeouts) if home_timeouts else SportsPresets.football_preset['home_timeouts'],
-            'away_timeouts': int(away_timeouts) if away_timeouts else SportsPresets.football_preset['away_timeouts'],
+            'clock': clock,
+            'home_score': home_score,
+            'away_score': away_score,
+            'period': period,
+            'down': down,
+            'yards': yards,
+            'home_timeouts': home_timeouts,
+            'away_timeouts': away_timeouts,
+            'home_possesion': home_possesion
         }
+# 12:00HOME      GUEST     2233146311 >403330
+
+if __name__ == "__main__":
+    rtd = "12:00HOME      GUEST     2233146311  403339"
+    print(RtdParser("football").parse_football(rtd))
