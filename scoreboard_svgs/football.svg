@@ -41,6 +41,7 @@
         fill="#474747"
       />
       <g id="AwayRegion">
+        <!--
         <g id="AwayTimeoutIndicator">
           <path
             id="Vector"
@@ -61,7 +62,8 @@
           >
             TIMEOUT
           </text>
-        </g>
+        </g> 
+        -->
         <path
           id="AwayLight"
           d="M461 38.579H778C786.28 38.579 793 45.295 793 53.579V112C793 120.28 786.28 127 778 127H461V38.579Z"
@@ -121,6 +123,7 @@
         </g>
       </g>
       <g id="HomeRegion">
+        <!--
         <g id="HomeTimeoutIndicator">
           <path
             id="Vector_3"
@@ -142,6 +145,7 @@
             timeout
           </text>
         </g>
+        -->
         <path
           id="HomeLight"
           d="M129 53.579C129 45.295 135.716 38.579 144 38.579H461V127H144C135.716 127 129 120.28 129 112V53.579Z"
@@ -240,7 +244,7 @@
         <path
           id="DownRegion"
           d="M1157 38H1470C1478.28 38 1485 44.716 1485 53V112C1485 120.28 1478.28 127 1470 127H1157V38Z"
-          fill="url(#paint4_linear_1_2)"
+          fill="url(#homeDownGradient)"
         />
         <text
           id="down_text"
@@ -305,7 +309,7 @@
       <stop offset="1" stop-color="var(--home_team_dark)" />
     </linearGradient>
     <linearGradient
-      id="paint4_linear_1_2"
+      id="homeDownGradient"
       x1="1321"
       y1="40"
       x2="1321"
@@ -314,6 +318,17 @@
     >
       <stop stop-color="var(--home_team_light)" />
       <stop offset="1" stop-color="var(--home_team_dark)" />
+    </linearGradient>
+    <linearGradient
+      id="awayDownGradient"
+      x1="1321"
+      y1="40"
+      x2="1321"
+      y2="122"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop stop-color="var(--away_team_light)" />
+      <stop offset="1" stop-color="var(--away_team_dark)" />
     </linearGradient>
   </defs>
 </svg>

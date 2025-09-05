@@ -174,3 +174,20 @@ export async function getScoreboardName() {
     });
   });
 }
+
+export async function getServiceStatus() {
+  return new Promise((resolve, reject) => {
+    $.ajax({
+      url: "/api/scoreboard-service/status",
+      method: "GET",
+      dataType: "json",
+      success: function (data) {
+        resolve(data);
+      },
+      error: function (jqXHR, textStatus, errorThrown) {
+        console.error("Failed to get status:", textStatus, errorThrown);
+        reject(new Error(`Error getting status: ${textStatus}`));
+      },
+    });
+  });
+}

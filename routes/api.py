@@ -100,5 +100,13 @@ def get_scoreboard_name():
     global active_thread
     if active_thread is None or not active_thread.running:
         return jsonify({"error": "Scoreboard service is not running"}), 403
-    data = {"scoreboard_name" : active_thread.scoreboard_name}
+    data = {"scoreboard_name": active_thread.scoreboard_name}
     return jsonify(data)
+
+
+@api_bp.route('/api/scoreboard-service/status', methods=['GET'])
+def get_status():
+    global active_thread
+    if active_thread is None:
+        return jsonify({"status": "stopped"})
+    return jsonify({"status": active_thread.get_status()})

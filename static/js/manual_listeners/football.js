@@ -8,6 +8,7 @@ let score = {
   period: 1,
   home_fouls: 0,
   away_fouls: 0,
+  home_possesion: true,
   home_bonus: false,
   away_bonus: false,
   home_timeouts: 5,
@@ -19,6 +20,7 @@ let clockInterval;
 let manual_football;
 
 export const updateSVGScorePreviewFootball = (score) => {
+  console.log(score)
   for (const [key, value] of Object.entries(score)) {
     if (key.endsWith("_timeouts")) {
       for (let index = 5; index > 0; index--) {
@@ -82,6 +84,16 @@ export const updateSVGScorePreviewFootball = (score) => {
       $(".svg-score svg")
         .find("#down_text")
         .text(`${downText} & ${score["yards_to_go"]}`);
+    } else if (key == "home_possesion") {
+      if (score["home_possesion"] == true) {
+        $(".svg-score svg")
+          .find("#DownRegion")
+          .attr("fill", "url(#homeDownGradient)")
+      } else {
+        $(".svg-score svg")
+          .find("#DownRegion")
+          .attr("fill", "url(#awayDownGradient)")
+      }
     }
   }
 };
@@ -93,7 +105,19 @@ const updateScoreLogic = (id, value, score) => {
   } else if (id === "game_seconds") {
     score.clock.seconds = Math.min(Math.max(value, 0), 59);
   } else if (id === "down") {
+    score.down = Math.min(Math.max(parseInt(value), 1), 4);
+  } else if (id === "yards_to_go") {
+    score.yards_to_go = Math.max(parseInt(value), 0);
+  } else if (id === "home_possesion") {
+    score.home_possesion = !score.home_possesion;
 
+    manual_football
+      .find(`#${id}.scoreboard-input`)
+      .text(score.home_possesion ? "Home" : "Away")
+
+    manual_football
+      .find(`#${id}.scoreboard-input`)
+      .toggleClass("button-active");
   } else {
     score[id] = Math.max(parseInt(value), 0);
   }
