@@ -52,7 +52,7 @@
         letter-spacing="0.05em"
         text-anchor="end"
       >
-        away
+        {{away_team_name}}
       </text>
       <text
         id="away_fouls"
@@ -66,7 +66,7 @@
         letter-spacing="0.05em"
         text-anchor="end"
       >
-        0 FOULS
+        {{away_fouls}} FOULS
       </text>
       <g id="AwayTimeouts">
         <ellipse
@@ -123,7 +123,7 @@
       letter-spacing="0em"
       text-anchor="middle"
     >
-      0
+      {{away_score}}
     </text>
     <g id="HomeRegion">
       <path
@@ -149,7 +149,7 @@
         letter-spacing="0.05em"
         text-anchor="start"
       >
-        home
+        {{home_team_name}}
       </text>
       <text
         id="home_score"
@@ -163,7 +163,7 @@
         letter-spacing="0em"
         text-anchor="middle"
       >
-        0
+        {{home_score}}
       </text>
       <text
         id="home_fouls"
@@ -177,7 +177,7 @@
         letter-spacing="0.05em"
         text-anchor="start"
       >
-        0 FOULS
+        {{home_fouls}} FOULS
       </text>
       <g id="HomeTimeouts">
         <ellipse
@@ -248,7 +248,7 @@
       letter-spacing="0.05em"
       text-anchor="middle"
     >
-      0:00
+      {{clock_text}}
     </text>
     <text
       id="away_bonus_tag"
@@ -276,7 +276,7 @@
       letter-spacing="0.05em"
       text-anchor="middle"
     >
-      1st
+      {{period}}
     </text>
   </g>
   <defs>

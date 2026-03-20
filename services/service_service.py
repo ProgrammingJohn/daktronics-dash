@@ -1,96 +1,49 @@
-import threading
-import os, sys, time
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from services.utils import get_scoreboard_preferences, write_scorebaord_preferences
-from services.synced_service import connect_to_server, receive_rtd, RtdParser
+from __future__ import annotations
 
-scoreboards = ['baseball', 'basketball', 'football']
-scoreboard_modes = {
-    'baseball': {'synced': True, 'manual': True},
-    'basketball': {'synced': True, 'manual': True},
-    'football': {'synced': True, 'manual': True},
-}
-global_scoreboard_data = {}
+from typing import Any, Dict, List, Optional
 
+from services.config import BackendConfig, load_config
+from services.models import SUPPORTED_SPORTS
+from services.preferences import get_preferences, scoreboard_modes as build_scoreboard_modes, update_preferences
+from services.runtime import RuntimeManager
+from services.svg_templates import SvgTemplateService
 
-def load_scoreboard(scoreboard_name):
-    try:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(base_dir, "..", "scoreboard_svgs", f"{scoreboard_name}.svg")
-        with open(file_path, "r") as f:
-            svg = f.read()
-            return svg
-    except FileNotFoundError:
-        return None
-    
-def update_scoreboard_preferences(preferences, scoreboardName):
-    old_preferences = get_scoreboard_preferences()
-    for key in preferences:
-        old_preferences[scoreboardName][key] = preferences[key]
-    write_scorebaord_preferences(old_preferences)
+_config: BackendConfig = load_config()
+_runtime = RuntimeManager(_config)
+_svg_templates = SvgTemplateService(_config)
 
-class ScoreboardService(threading.Thread):
-    def __init__(self, scoreboard_name=None, is_dakdash_synced=False, ip=None, port: int=None):
-        global global_scoreboard_data
-        super().__init__()
-        self.ip = ip
-        self.port = int(port) if port is not None else None
-        self.connection = None
-        self.is_dakdash_synced = is_dakdash_synced
-        self.scoreboard_name = scoreboard_name
-        self.running = True
-        self.parser = None
-        self.status = "stopped"
-
-    def update_scoreboard_data(self, new_data):
-        global global_scoreboard_data
-        global_scoreboard_data = new_data
-
-    def get_scoreboard_data(self):
-        global global_scoreboard_data
-        return global_scoreboard_data
-
-    def get_status(self):
-        return self.status
-
-    def run(self):
-        global global_scoreboard_data
-        if self.is_dakdash_synced:
-            self.parser = RtdParser(self.scoreboard_name)
-
-            while self.running:
-                try:
-                    print(f"Connecting to {self.ip}:{self.port}")
-                    self.status = "connecting"
-                    with connect_to_server(self.ip, self.port) as tcp_socket:
-                        self.status = "connected"
-                        print(f"Connected to {self.ip}:{self.port}")
-                        
-                        while self.running:
-                            rtd = receive_rtd(tcp_socket)
-                            print(rtd)
-                            global_scoreboard_data = self.parser.parse(rtd) 
-                except OSError:
-                    self.status = "disconnected"
-                    print(f"Failed to connect to {self.ip}:{self.port}")
-                except ConnectionRefusedError:
-                    self.status = "disconnected"
-                    print(f"Failed to connect to {self.ip}:{self.port}")
-                time.sleep(1)
-        else:
-            self.status = "manual"
-            while self.running:
-                time.sleep(0.1)
-
-    def stop(self):
-        global global_scoreboard_data
-        print("scoreboard service stop call")
-        global_scoreboard_data = {}
-        self.running = False
-        self.status = "stopped"
-
-    def mock_score_update(self):
-        return {"home": 10, "away": 15}
+scoreboards: List[str] = list(SUPPORTED_SPORTS)
+scoreboard_modes: Dict[str, Dict[str, bool]] = build_scoreboard_modes()
 
 
-active_thread: ScoreboardService = None
+def get_backend_config() -> BackendConfig:
+    return _config
+
+
+def get_runtime() -> RuntimeManager:
+    return _runtime
+
+
+def get_svg_service() -> SvgTemplateService:
+    return _svg_templates
+
+
+def load_scoreboard(scoreboard_name: str) -> Optional[str]:
+    return _svg_templates.load_template(scoreboard_name)
+
+
+def get_scoreboard_names() -> List[str]:
+    names = []
+    for filename in _svg_templates.list_templates():
+        names.append(filename[:-4] if filename.lower().endswith(".svg") else filename)
+    if not names:
+        return list(SUPPORTED_SPORTS)
+    return sorted(set(names))
+
+
+def get_scoreboard_preferences(scoreboard_name: str) -> Optional[Dict[str, Any]]:
+    return get_preferences(_config, scoreboard_name)
+
+
+def update_scoreboard_preferences(preferences: Dict[str, Any], scoreboard_name: str) -> Dict[str, Any]:
+    return update_preferences(_config, scoreboard_name, preferences)

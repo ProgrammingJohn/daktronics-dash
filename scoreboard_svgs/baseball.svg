@@ -75,7 +75,7 @@
         letter-spacing="0em"
         text-anchor="middle"
       >
-        Top 1
+        {{inning_text}}
       </text>
       <text
         id="strikes_and_balls"
@@ -89,7 +89,7 @@
         letter-spacing="0em"
         text-anchor="middle"
       >
-        0 - 0
+        {{strikes_and_balls}}
       </text>
       <text
         id="out_text"
@@ -103,7 +103,7 @@
         letter-spacing="0em"
         text-anchor="middle"
       >
-        0 outs
+        {{out_text}}
       </text>
 
       <path
@@ -124,7 +124,7 @@
         letter-spacing="0.05em"
         text-anchor="left"
       >
-        home
+        {{away_team_name}}
       </text>
 
       <path
@@ -169,7 +169,7 @@
         x="275"
         y="65"
       >
-        0
+        {{away_score}}
       </text>
 
       <text
@@ -184,7 +184,7 @@
         letter-spacing="0.05em"
         text-anchor="left"
       >
-        away
+        {{home_team_name}}
       </text>
       <text
         id="home_score"
@@ -198,7 +198,7 @@
         x="275"
         y="160"
       >
-        0
+        {{home_score}}
       </text>
     </g>
   </g>

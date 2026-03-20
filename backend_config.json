@@ -1,0 +1,11 @@
+{
+  "tcp_connect_timeout_sec": 3.0,
+  "socket_timeout_sec": 1.0,
+  "reconnect_delay_sec": 1.0,
+  "stale_timeout_sec": 8.0,
+  "seq_cache_size": 256,
+  "svg_dir": "scoreboard_svgs",
+  "preferences_file": "scoreboard_preferences.json",
+  "max_svg_upload_bytes": 1048576,
+  "log_level": "INFO"
+}

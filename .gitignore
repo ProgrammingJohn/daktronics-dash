@@ -3,3 +3,8 @@ rtd-reference.pdf
 .DS_Store
 *.pyc
 *.cpython__pycache__/
+electron/node_modules/
+electron/dist/
+electron/.vite/
+electron/coverage/
+env

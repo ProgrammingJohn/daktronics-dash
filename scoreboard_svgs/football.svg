@@ -41,29 +41,6 @@
         fill="#474747"
       />
       <g id="AwayRegion">
-        <!--
-        <g id="AwayTimeoutIndicator">
-          <path
-            id="Vector"
-            d="M461 15C461 6.716 467.716 0 476 0H778C786.28 0 793 6.716 793 15V40H461V15Z"
-            fill="url(#paint0_linear_1_2)"
-          />
-          <text
-            id="TIMEOUT"
-            fill="var(--away_team_text)"
-            xml:space="preserve"
-            style="white-space: normal"
-            font-size="30"
-            font-weight="bold"
-            letter-spacing="0em"
-            text-anchor="middle"
-            x="630"
-            y="30.9091"
-          >
-            TIMEOUT
-          </text>
-        </g> 
-        -->
         <path
           id="AwayLight"
           d="M461 38.579H778C786.28 38.579 793 45.295 793 53.579V112C793 120.28 786.28 127 778 127H461V38.579Z"
@@ -88,7 +65,7 @@
           letter-spacing="0.05em"
           text-anchor="left"
         >
-          away
+          {{away_team_name}}
         </text>
         <text
           id="away_score"
@@ -102,7 +79,7 @@
           x="735"
           y="104.701"
         >
-          0
+          {{away_score}}
         </text>
         <g id="AwayTimeouts">
           <path
@@ -123,29 +100,6 @@
         </g>
       </g>
       <g id="HomeRegion">
-        <!--
-        <g id="HomeTimeoutIndicator">
-          <path
-            id="Vector_3"
-            d="M129 15C129 6.716 135.716 0 144 0H446C454.284 0 461 6.716 461 15V40H129V15Z"
-            fill="url(#paint2_linear_1_2)"
-          />
-          <text
-            id="TIMEOUT_2"
-            fill="var(--home_team_text)"
-            xml:space="preserve"
-            style="white-space: normal"
-            font-size="30"
-            font-weight="bold"
-            letter-spacing="0em"
-            text-anchor="middle"
-            x="298.171"
-            y="30.9091"
-          >
-            timeout
-          </text>
-        </g>
-        -->
         <path
           id="HomeLight"
           d="M129 53.579C129 45.295 135.716 38.579 144 38.579H461V127H144C135.716 127 129 120.28 129 112V53.579Z"
@@ -170,7 +124,7 @@
           letter-spacing="0.05em"
           text-anchor="left"
         >
-          home
+          {{home_team_name}}
         </text>
         <text
           id="home_score"
@@ -184,7 +138,7 @@
           x="402"
           y="104.701"
         >
-          0
+          {{home_score}}
         </text>
         <g id="HomeTimeouts">
           <path
@@ -223,7 +177,7 @@
           letter-spacing="0em"
           text-anchor="middle"
         >
-          0:00
+          {{clock_text}}
         </text>
         <text
           id="period"
@@ -237,7 +191,7 @@
           x="883"
           y="101.322"
         >
-          1st
+          {{period}}
         </text>
       </g>
       <g id="DownGroup">
@@ -258,7 +212,7 @@
           y="101.322"
           text-anchor="middle"
         >
-          2ND &#38; 5
+          {{down_text}}
         </text>
       </g>
     </g>
