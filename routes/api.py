@@ -108,5 +108,15 @@ def get_scoreboard_name():
 def get_status():
     global active_thread
     if active_thread is None:
-        return jsonify({"status": "stopped"})
-    return jsonify({"status": active_thread.get_status()})
+        return jsonify(
+            {
+                "status": "stopped",
+                "telemetry": ScoreboardService.build_default_telemetry(status="stopped"),
+            }
+        )
+    return jsonify(
+        {
+            "status": active_thread.get_status(),
+            "telemetry": active_thread.get_telemetry(),
+        }
+    )

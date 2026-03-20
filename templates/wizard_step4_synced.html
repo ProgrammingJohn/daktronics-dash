@@ -1,3 +1,17 @@
 <h2>Live Scoreboard</h2>
 <div class="svg-score" id="svg-preview-score"></div>
-<p>Status: <span id="status_text">starting...</span></p>
+<div id="esp32_telemetry" style="margin-top: 12px">
+  <h3>ESP32 Diagnostics</h3>
+  <p>Status: <span id="status_text">starting...</span></p>
+  <p>IP: <span id="telemetry_ip">N/A</span></p>
+  <p>Port: <span id="telemetry_port">N/A</span></p>
+  <p>Ping: <span id="telemetry_ping">N/A</span></p>
+  <p>Last Packet Age: <span id="telemetry_last_packet_age">N/A</span></p>
+  <p>Data Freshness: <span id="telemetry_freshness">stale</span></p>
+  <p>Packets Received: <span id="telemetry_packets_received">0</span></p>
+  <p>Packets Dropped: <span id="telemetry_packets_dropped">0</span></p>
+  <p>Parse Errors: <span id="telemetry_parse_errors">0</span></p>
+  <p>Reconnects: <span id="telemetry_reconnect_count">0</span></p>
+  <p>Connected Since: <span id="telemetry_connected_since">N/A</span></p>
+  <p>Last Error: <span id="telemetry_last_error">N/A</span></p>
+</div>
