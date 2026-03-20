@@ -1,5 +1,6 @@
 import threading
 import os, sys, time
+from copy import deepcopy
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.utils import get_scoreboard_preferences, write_scorebaord_preferences
 from services.synced_service import connect_to_server, receive_rtd, RtdParser
@@ -41,6 +42,7 @@ class ScoreboardService(threading.Thread):
         self.running = True
         self.parser = None
         self.status = "stopped"
+        self.last_score = {}
 
     def update_scoreboard_data(self, new_data):
         global global_scoreboard_data
@@ -57,6 +59,8 @@ class ScoreboardService(threading.Thread):
         global global_scoreboard_data
         if self.is_dakdash_synced:
             self.parser = RtdParser(self.scoreboard_name)
+            self.last_score = self.parser.default_score()
+            global_scoreboard_data = deepcopy(self.last_score)
 
             while self.running:
                 try:
@@ -68,8 +72,11 @@ class ScoreboardService(threading.Thread):
                         
                         while self.running:
                             rtd = receive_rtd(tcp_socket)
-                            print(rtd)
-                            global_scoreboard_data = self.parser.parse(rtd) 
+                            try:
+                                self.last_score = self.parser.parse(rtd, self.last_score)
+                                global_scoreboard_data = deepcopy(self.last_score)
+                            except Exception as parse_error:
+                                print(f"Failed to parse RTD frame: {parse_error}")
                 except OSError:
                     self.status = "disconnected"
                     print(f"Failed to connect to {self.ip}:{self.port}")

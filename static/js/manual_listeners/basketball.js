@@ -19,10 +19,20 @@ let manual_basketball;
 export const updateSVGScorePreviewBaketball = (score) => {
   for (const [key, value] of Object.entries(score)) {
     if (key === "clock") {
-      let clockText =
-        String(score.clock.minutes).padStart(1, "0") +
-        ":" +
-        String(score.clock.seconds).padStart(2, "0");
+      let clockText = "0:00";
+      if (typeof score.clock === "string") {
+        clockText = score.clock;
+      } else if (
+        score.clock &&
+        typeof score.clock === "object" &&
+        score.clock.minutes !== undefined &&
+        score.clock.seconds !== undefined
+      ) {
+        clockText =
+          String(score.clock.minutes).padStart(1, "0") +
+          ":" +
+          String(score.clock.seconds).padStart(2, "0");
+      }
       $(".svg-score svg").find(`#${key}`).text(clockText);
     } else if (key === "clock_text") {
       $(".svg-score svg").find(`#clock`).text(value);

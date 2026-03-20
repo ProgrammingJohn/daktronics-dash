@@ -4,27 +4,18 @@ import { updateScore } from "../api.js";
 let score = {
   home_score: 0,
   away_score: 0,
-  clock: {minutes: 0, seconds: 0},
+  clock: { minutes: 0, seconds: 0 },
   period: 1,
-  home_fouls: 0,
-  away_fouls: 0,
   home_possesion: true,
-  home_bonus: false,
-  away_bonus: false,
-  home_timeouts: 5,
-  away_timeouts: 5,
-  yards_to_go: 0,
-  down: 1,
-  yards: 10,
   home_timeouts: 3,
   away_timeouts: 3,
-  home_possesion: true
-}
+  down: 1,
+  yards: 10,
+};
 let clockInterval;
 let manual_football;
 
 export const updateSVGScorePreviewFootball = (score) => {
-  console.log(score)
   for (const [key, value] of Object.entries(score)) {
     if (key.endsWith("_timeouts")) {
       for (let index = 3; index > 0; index--) {
@@ -92,38 +83,44 @@ export const updateSVGScorePreviewFootball = (score) => {
       if (score["home_possesion"] == true) {
         $(".svg-score svg")
           .find("#DownRegion")
-          .attr("fill", "url(#homeDownGradient)")
+          .attr("fill", "url(#homeDownGradient)");
       } else {
         $(".svg-score svg")
           .find("#DownRegion")
-          .attr("fill", "url(#awayDownGradient)")
+          .attr("fill", "url(#awayDownGradient)");
       }
     }
   }
 };
 
+const toInt = (value, fallback = 0) => {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
 const updateScoreLogic = (id, value, score) => {
-  console.log(id, value, score);
   if (id === "game_minutes") {
-    score.clock.minutes = Math.min(Math.max(value, 0), 99);
+    score.clock.minutes = Math.min(Math.max(toInt(value, score.clock.minutes), 0), 99);
   } else if (id === "game_seconds") {
-    score.clock.seconds = Math.min(Math.max(value, 0), 59);
+    score.clock.seconds = Math.min(Math.max(toInt(value, score.clock.seconds), 0), 59);
   } else if (id === "down") {
-    score.down = Math.min(Math.max(parseInt(value), 1), 4);
-  } else if (id === "yards_to_go") {
-    score.yards_to_go = Math.max(parseInt(value), 0);
+    score.down = Math.min(Math.max(toInt(value, score.down), 1), 4);
+  } else if (id === "yards") {
+    score.yards = Math.min(Math.max(toInt(value, score.yards), 0), 99);
+  } else if (id.endsWith("_timeouts")) {
+    score[id] = Math.min(Math.max(toInt(value, score[id]), 0), 3);
   } else if (id === "home_possesion") {
     score.home_possesion = !score.home_possesion;
 
     manual_football
       .find(`#${id}.scoreboard-input`)
-      .text(score.home_possesion ? "Home" : "Away")
+      .text(score.home_possesion ? "Home" : "Away");
 
     manual_football
       .find(`#${id}.scoreboard-input`)
       .toggleClass("button-active");
   } else {
-    score[id] = Math.max(parseInt(value), 0);
+    score[id] = Math.max(toInt(value, score[id]), 0);
   }
   updateClockDisplay();
 
@@ -220,6 +217,10 @@ export const initFootballControls = async () => {
         manual_football
           .find("#away_timeouts.scoreboard-input")
           .val(score.away_timeouts);
+        break;
+      case "p":
+        score = updateScoreLogic("period", score.period + 1, score);
+        manual_football.find("#period.scoreboard-input").val(score.period);
         break;
       default:
         return;

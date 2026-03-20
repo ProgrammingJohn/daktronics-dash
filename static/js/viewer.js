@@ -13,6 +13,7 @@ $(document).ready(async () => {
   const scoreboardName = await getScoreboardName();
   const activeScoreboard = await getScoreboardSVG(scoreboardName);
   const scoreboardPreferences = await getScoreboardPreferences(scoreboardName);
+  let lastRenderedScore = null;
 
   $(".svg-score").html(activeScoreboard);
   const svgElement = $(".svg-score svg");
@@ -25,8 +26,7 @@ $(document).ready(async () => {
     }
   }
 
-  setInterval(async () => {
-    const score = await getScore();
+  const renderScore = (score) => {
     updateSVGScorePreviewBasic(score);
     if (scoreboardName === "baseball") {
       updateSVGScorePreviewBaseball(score);
@@ -34,6 +34,21 @@ $(document).ready(async () => {
       updateSVGScorePreviewBaketball(score);
     } else if (scoreboardName == "football") {
       updateSVGScorePreviewFootball(score);
+    }
+  };
+
+  setInterval(async () => {
+    try {
+      const score = await getScore();
+      if (score && Object.keys(score).length > 0) {
+        lastRenderedScore = score;
+      }
+    } catch (error) {
+      console.error("Failed to poll score:", error);
+    }
+
+    if (lastRenderedScore) {
+      renderScore(lastRenderedScore);
     }
   }, 1000);
 });

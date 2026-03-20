@@ -14,14 +14,13 @@ import { updateSVGScorePreviewFootball } from "../manual_listeners/football.js";
 export const initStep4Synced = async () => {
   $(".wizard-step").hide();
   $("#wizard_step4_synced").show();
-  console.log("step 4 synced running")
   StateHandler.setState("currentProgressBarStep", 4);
   const scoreboard_name = StateHandler.getState("selectedScoreboard");
   const ipAddress = StateHandler.getState("ipAddress");
   const port = StateHandler.getState("port");
+  let lastRenderedScore = null;
 
   const svg = await getScoreboardSVG(scoreboard_name);
-  console.log(svg)
   const prefs = await getScoreboardPreferences(scoreboard_name);
   $("#wizard_step4_synced #svg-preview-score").html(svg);
   const svgElement = $("#wizard_step4_synced #svg-preview-score");
@@ -36,19 +35,31 @@ export const initStep4Synced = async () => {
 
   await startService(scoreboard_name, "synced", ipAddress, port);
 
+  const renderScore = (score) => {
+    updateSVGScorePreviewBasic(score);
+    if (scoreboard_name === "baseball") {
+      updateSVGScorePreviewBaseball(score);
+    } else if (scoreboard_name === "basketball") {
+      updateSVGScorePreviewBaketball(score);
+    } else if (scoreboard_name === "football") {
+      updateSVGScorePreviewFootball(score);
+    }
+  };
+
   setInterval(async () => {
-    const status = await getServiceStatus();
-    $("#status_text").text(status.status);
-    if (status.status === "connected") {
+    try {
+      const status = await getServiceStatus();
+      $("#status_text").text(status.status);
       const score = await getScore();
-      updateSVGScorePreviewBasic(score);
-      if (scoreboard_name === "baseball") {
-        updateSVGScorePreviewBaseball(score);
-      } else if (scoreboard_name === "basketball") {
-        updateSVGScorePreviewBaketball(score);
-      } else if (scoreboard_name === "football") {
-        updateSVGScorePreviewFootball(score);
+      if (score && Object.keys(score).length > 0) {
+        lastRenderedScore = score;
       }
+    } catch (error) {
+      console.error("Failed to poll synced score:", error);
+    }
+
+    if (lastRenderedScore) {
+      renderScore(lastRenderedScore);
     }
   }, 1000);
 };
