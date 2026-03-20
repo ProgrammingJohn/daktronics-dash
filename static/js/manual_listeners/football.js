@@ -4,29 +4,27 @@ import { updateScore } from "../api.js";
 let score = {
   home_score: 0,
   away_score: 0,
-  clock: { minutes: 0, seconds: 0 },
+  clock: {minutes: 0, seconds: 0},
   period: 1,
-  home_fouls: 0,
-  away_fouls: 0,
-  home_bonus: false,
-  away_bonus: false,
-  home_timeouts: 5,
-  away_timeouts: 5,
-  yards_to_go: 0,
   down: 1,
-};
+  yards: 10,
+  home_timeouts: 3,
+  away_timeouts: 3,
+  home_possesion: true
+}
 let clockInterval;
 let manual_football;
 
 export const updateSVGScorePreviewFootball = (score) => {
+  console.log(score)
   for (const [key, value] of Object.entries(score)) {
     if (key.endsWith("_timeouts")) {
-      for (let index = 5; index > 0; index--) {
+      for (let index = 3; index > 0; index--) {
         $(".svg-score svg")
           .find(`#${key}_t` + index)
           .attr("fill", "white");
       }
-      for (let index = 5; index > score[key]; index--) {
+      for (let index = 3; index > score[key]; index--) {
         $(".svg-score svg")
           .find(`#${key}_t` + index)
           .attr("fill", "gray");
@@ -60,7 +58,7 @@ export const updateSVGScorePreviewFootball = (score) => {
           break;
       }
       $(".svg-score svg").find(`#${key}`).text(periodText);
-    } else if (key === "down" || key === "yards_to_go") {
+    } else if (key === "down" || key === "yards") {
       let downText = "";
       switch (score["down"]) {
         case 1:
@@ -81,7 +79,17 @@ export const updateSVGScorePreviewFootball = (score) => {
       }
       $(".svg-score svg")
         .find("#down_text")
-        .text(`${downText} & ${score["yards_to_go"]}`);
+        .text(`${downText} & ${score["yards"]}`);
+    } else if (key == "home_possesion") {
+      if (score["home_possesion"] == true) {
+        $(".svg-score svg")
+          .find("#DownRegion")
+          .attr("fill", "url(#homeDownGradient)")
+      } else {
+        $(".svg-score svg")
+          .find("#DownRegion")
+          .attr("fill", "url(#awayDownGradient)")
+      }
     }
   }
 };
@@ -96,6 +104,16 @@ const updateScoreLogic = (id, value, score) => {
     score.down = Math.min(Math.max(parseInt(value), 1), 4);
   } else if (id === "yards_to_go") {
     score.yards_to_go = Math.max(parseInt(value), 0);
+  } else if (id === "home_possesion") {
+    score.home_possesion = !score.home_possesion;
+
+    manual_football
+      .find(`#${id}.scoreboard-input`)
+      .text(score.home_possesion ? "Home" : "Away")
+
+    manual_football
+      .find(`#${id}.scoreboard-input`)
+      .toggleClass("button-active");
   } else {
     score[id] = Math.max(parseInt(value), 0);
   }
