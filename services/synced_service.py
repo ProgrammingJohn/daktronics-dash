@@ -57,11 +57,7 @@ class SportsPresets:
     football_preset = {
         'home_score': 0,
         'away_score': 0,
-<<<<<<< HEAD
         'clock': {'minutes': 0, 'seconds': 0},
-=======
-        'clock': {'minutes': '00', 'seconds': '00'},
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
         'period': 1,
         'down': 1,
         'yards': 10,
@@ -73,15 +69,11 @@ def safe_parse(string: str, default: str, start_index: int, end_index: int = Non
     if not end_index:
         end_index = start_index + 1
     try:
-<<<<<<< HEAD
         value = string[start_index : end_index].strip()
         if value:
             return value
         else:
             return default
-=======
-        return string[start_index : end_index].strip()
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
     except:
         return default
 
@@ -159,7 +151,6 @@ class RtdParser:
     def parse_football(self, rtd):
         sport = SportsPresets.football_preset
         
-<<<<<<< HEAD
         clock = safe_parse(rtd, "00:00", 0, 5)
         try:
             clock = {'minutes': int(clock.split(':')[0]), 'seconds': int(clock.split(':')[1])}
@@ -172,20 +163,6 @@ class RtdParser:
         yards = int(safe_parse(rtd, sport['yards'], 33, 35))
         home_timeouts = int(safe_parse(rtd, sport['home_timeouts'], 39, 40))
         away_timeouts = int(safe_parse(rtd, sport['away_timeouts'], 40, 41))
-=======
-        clock = safe_parse(rtd, {'minutes': '00', 'seconds': '00'}, 0, 5)
-        try:
-            clock = {'minutes': clock.split(':')[0], 'seconds': clock.split(':')[1]}
-        except:
-            clock = {'minutes': '00', 'seconds': '00'}
-        home_score = safe_parse(rtd, sport['home_score'], 25, 27)
-        away_score = safe_parse(rtd, sport['away_score'], 27, 29)
-        period = safe_parse(rtd, sport['period'], 29, 30)
-        down = safe_parse(rtd, sport['down'], 32, 33)
-        yards = safe_parse(rtd, sport['yards'], 33, 35)
-        home_timeouts = safe_parse(rtd, sport['home_timeouts'], 39, 40)
-        away_timeouts = safe_parse(rtd, sport['away_timeouts'], 40, 41)
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
         home_possesion = safe_parse(rtd, sport['home_possesion'], 36, 37)
         home_possesion = True if home_possesion == ">" else False
         
@@ -206,9 +183,5 @@ class RtdParser:
 # 12:00HOME      GUEST     2233146311 >403330
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     rtd = "12:00HOME      GUEST     2233146111  403339"
-=======
-    rtd = "12:00HOME      GUEST     2233146311  403339"
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
     print(RtdParser("football").parse_football(rtd))

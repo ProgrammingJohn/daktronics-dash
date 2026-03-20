@@ -6,8 +6,6 @@ let score = {
   away_score: 0,
   clock: {minutes: 0, seconds: 0},
   period: 1,
-<<<<<<< HEAD
-=======
   home_fouls: 0,
   away_fouls: 0,
   home_possesion: true,
@@ -16,7 +14,6 @@ let score = {
   home_timeouts: 5,
   away_timeouts: 5,
   yards_to_go: 0,
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
   down: 1,
   yards: 10,
   home_timeouts: 3,
@@ -90,11 +87,7 @@ export const updateSVGScorePreviewFootball = (score) => {
       }
       $(".svg-score svg")
         .find("#down_text")
-<<<<<<< HEAD
         .text(`${downText} & ${score["yards"]}`);
-=======
-        .text(`${downText} & ${score["yards_to_go"]}`);
->>>>>>> 27bd02e7ee5cb192d87a171d8a2e0a053ac9b8a5
     } else if (key == "home_possesion") {
       if (score["home_possesion"] == true) {
         $(".svg-score svg")
