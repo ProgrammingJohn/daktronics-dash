@@ -3,6 +3,7 @@ import time
 import unittest
 from dataclasses import replace
 
+from services.connection.discovery import DiscoveryResult
 from services.connection.protocol import (
     Envelope,
     MessageType,
@@ -98,7 +99,128 @@ class FactorySequence:
         return self._transports[index]
 
 
+class FakeDiscoveryClient:
+    def __init__(self, result=None):
+        self.result = result
+        self.calls = []
+
+    def discover(self, device_id, excluded_hosts=(), stop_event=None,
+                 progress=None):
+        self.calls.append((device_id, set(excluded_hosts)))
+        if progress is not None:
+            progress("PASSIVE_LOOKUP", 0, None, None)
+            if self.result is None:
+                progress("BROADCAST_PROBING", 3, None, None)
+                progress("NOT_FOUND", 3, None, None)
+            else:
+                progress(
+                    "FOUND", 0, self.result.method, self.result.host
+                )
+        return self.result
+
+
 class SupervisorTests(unittest.TestCase):
+    def test_direct_address_is_tried_without_discovery(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient()
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(0.5))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(hosts, ["10.93.37.138"])
+        self.assertEqual(discovery.calls, [])
+        self.assertEqual(diagnostics["phase"], "FOUND")
+        self.assertEqual(diagnostics["method"], "saved_ip")
+
+    def test_failed_direct_address_discovers_once_and_uses_result(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient(DiscoveryResult(
+            "10.93.37.138", 1234, "wt32-aabbccddeeff", "arp_cache"
+        ))
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            if host == "10.93.37.99":
+                raise OSError("unreachable")
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(hosts[:2], ["10.93.37.99", "10.93.37.138"])
+        self.assertEqual(len(discovery.calls), 1)
+        self.assertEqual(discovery.calls[0][1], {"10.93.37.99"})
+        self.assertEqual(diagnostics["phase"], "FOUND")
+        self.assertEqual(diagnostics["method"], "arp_cache")
+        self.assertEqual(diagnostics["resolved_host"], "10.93.37.138")
+
+    def test_missing_address_discovers_before_connecting(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient(DiscoveryResult(
+            "10.93.37.138", 1234, "wt32-aabbccddeeff", "udp_broadcast"
+        ))
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", None, 1234, "wt32-aabbccddeeff",
+            LatestStateStore(), transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        supervisor.stop()
+        self.assertEqual(hosts, ["10.93.37.138"])
+        self.assertEqual(len(discovery.calls), 1)
+
+    def test_unanswered_discovery_is_not_repeated(self):
+        discovery = FakeDiscoveryClient()
+        calls = []
+
+        def factory(host, port, device_id):
+            calls.append(host)
+            raise OSError("unreachable")
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.5
+        while len(calls) < 3 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertGreaterEqual(len(calls), 2)
+        self.assertEqual(len(discovery.calls), 1)
+        self.assertEqual(diagnostics["phase"], "NOT_FOUND")
+        self.assertEqual(diagnostics["attempts"], 3)
+
     def test_stop_closes_transport_and_joins_promptly(self):
         transport = BlockingFakeTransport()
         supervisor = ConnectionSupervisor(

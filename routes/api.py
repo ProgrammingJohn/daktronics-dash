@@ -60,8 +60,7 @@ def start_service():
             return jsonify({'error': 'Previous scoreboard service did not stop'}), 503
     elif method == 'synced':
         device_id = data.get('device_id')
-        if not ip:
-            return jsonify({'error': 'IP address is required'}), 400
+        ip = ip or None
         try:
             port = int(port)
         except (TypeError, ValueError):

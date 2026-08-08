@@ -147,7 +147,9 @@ class DiscoveryTests(unittest.TestCase):
             nonce_factory=lambda: nonce,
             monotonic=clock,
         )
-        result = client.discover(expected)
+        result = client.discover(
+            expected, excluded_hosts={"10.93.37.138"}
+        )
         self.assertEqual((result.host, result.port, result.method),
                          ("10.93.37.138", 1234, "udp_broadcast"))
         self.assertEqual(len(sock.sent), 1)

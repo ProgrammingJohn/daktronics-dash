@@ -136,7 +136,7 @@ class DiscoveryClient:
                     except (socket.timeout, TimeoutError):
                         break
                     result = _validated_response(
-                        body, source, expected_device_id, nonce, excluded
+                        body, source, expected_device_id, nonce
                     )
                     if result is not None:
                         _report(
@@ -150,7 +150,7 @@ class DiscoveryClient:
             sock.close()
 
 
-def _validated_response(body, source, expected_device_id, nonce, excluded):
+def _validated_response(body, source, expected_device_id, nonce):
     if len(body) > 1200 or not isinstance(source, tuple) or not source:
         return None
     try:
@@ -165,7 +165,7 @@ def _validated_response(body, source, expected_device_id, nonce, excluded):
     announced_host = _valid_unicast_ipv4(envelope.details.get("ip"))
     port = envelope.details.get("port")
     if (source_host is None or announced_host != source_host or
-            source_host in excluded or isinstance(port, bool) or
+            isinstance(port, bool) or
             not isinstance(port, int) or not 1 <= port <= 65535):
         return None
     return DiscoveryResult(
