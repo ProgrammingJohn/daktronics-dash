@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
 import { describe, expect, test, vi } from "vitest";
 import { FakeBackendClient } from "../../api/FakeBackendClient";
 import { SessionProvider } from "../../state/SessionProvider";
@@ -21,9 +22,11 @@ function live_home_name(): string | null {
 describe("AppearanceEditor", () => {
   test("keeps edits in a staging renderer and discards them on cancel", async () => {
     render(
-      <SessionProvider client={new FakeBackendClient()}>
-        <App />
-      </SessionProvider>
+      <StrictMode>
+        <SessionProvider client={new FakeBackendClient()}>
+          <App />
+        </SessionProvider>
+      </StrictMode>
     );
     await launch_and_open();
     const before = live_home_name();
@@ -42,9 +45,11 @@ describe("AppearanceEditor", () => {
     const client = new FakeBackendClient();
     const save = vi.spyOn(client, "save_appearance");
     render(
-      <SessionProvider client={client}>
-        <App />
-      </SessionProvider>
+      <StrictMode>
+        <SessionProvider client={client}>
+          <App />
+        </SessionProvider>
+      </StrictMode>
     );
     await launch_and_open();
 

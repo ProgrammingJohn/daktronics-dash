@@ -12,6 +12,12 @@ async function launch_manual(client: FakeBackendClient): Promise<void> {
   expect((await client.get_active_snapshot()).session.control_authority).toBe("manual");
 }
 
+function program_field(field: string): string | null {
+  const preview = screen.getByRole("region", { name: "Program preview" });
+  const host = [...preview.querySelectorAll("div")].find((element) => element.shadowRoot !== null);
+  return host?.shadowRoot?.querySelector(`[data-score-field="${field}"]`)?.textContent ?? null;
+}
+
 describe("ManualControlDeck", () => {
   test("manual-only sessions mount controls and score buttons submit complete state", async () => {
     const client = new FakeBackendClient();
@@ -28,6 +34,7 @@ describe("ManualControlDeck", () => {
       const snapshot = await client.get_active_snapshot();
       expect(snapshot.scoreboard.fields.home_score).toBe(1);
       expect(Object.keys(snapshot.scoreboard.fields).length).toBeGreaterThan(5);
+      expect(program_field("home_score")).toBe("1");
     });
   });
 
@@ -48,6 +55,7 @@ describe("ManualControlDeck", () => {
     await waitFor(async () => {
       const snapshot = await client.get_active_snapshot();
       expect(snapshot.scoreboard.fields.clock).toEqual({ minutes: 8, seconds: 12 });
+      expect(program_field("clock")).toBe("8:12");
     });
   });
 

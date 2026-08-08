@@ -9,14 +9,16 @@ import { apply_appearance } from "./apply_appearance";
 import styles from "./AppearanceEditor.module.css";
 
 function StagingPreview({ snapshot, draft }: { snapshot: SessionSnapshot; draft: AppearancePayload }) {
-  const host_ref = useRef<HTMLDivElement>(null);
+  const container_ref = useRef<HTMLDivElement>(null);
   const renderer_ref = useRef<ScoreboardRenderer | null>(null);
 
   useEffect(() => {
-    const renderer = new ScoreboardRenderer(host_ref.current!);
+    const host = document.createElement("div");
+    const renderer = new ScoreboardRenderer(host);
     const sport = get_sport(snapshot.session.sport);
     renderer.mount(sport_svgs[snapshot.session.sport], sport.bindings);
     renderer.render(sport.derive_view(sport.score_schema.parse(snapshot.scoreboard.fields)));
+    container_ref.current?.replaceChildren(host);
     renderer_ref.current = renderer;
     return () => renderer.dispose();
   }, [snapshot.session.sport]);
@@ -25,7 +27,7 @@ function StagingPreview({ snapshot, draft }: { snapshot: SessionSnapshot; draft:
     if (renderer_ref.current !== null) apply_appearance(renderer_ref.current.shadowRoot, draft);
   }, [draft]);
 
-  return <div className={styles.stagingPreview} ref={host_ref} />;
+  return <div className={styles.stagingPreview} ref={container_ref} />;
 }
 
 export interface AppearanceEditorProps {
@@ -75,7 +77,7 @@ export function AppearanceEditor({ snapshot, on_close, on_apply }: AppearanceEdi
   return (
     <div className={styles.backdrop} role="dialog" aria-label="Appearance settings" aria-modal="true">
       <section className={styles.editor}>
-        <header><div><span>Isolated staging</span><h2>Appearance settings</h2></div><button aria-label="Close appearance settings" onClick={on_close}>×</button></header>
+        <header><div><span>Preview</span><h2>Appearance settings</h2></div><button aria-label="Close appearance settings" onClick={on_close}>×</button></header>
         {draft === null || home === undefined || away === undefined ? (
           <p>{error ?? "Loading appearance…"}</p>
         ) : (
