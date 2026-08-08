@@ -1,168 +1,62 @@
-#include <WiFi.h>
-#include <ETH.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Arduino.h>
+#include <Wire.h>
+#include <esp_system.h>
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-#define OLED_RESET -1
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#include "connection_server.h"
+#include "display_controller.h"
+#include "discovery_responder.h"
+#include "network_manager.h"
+#include "serial_pipeline.h"
 
-// OLED Positions
-#define OLED_COLOR_INDICATOR_SIZE 5
+dakdash::SerialFramer serial_framer;
+dakdash::LatestFrameStore latest_frame;
+dakdash::NetworkManager network_manager;
+dakdash::ConnectionServer connection_server(1234);
+dakdash::DisplayController display_controller;
+dakdash::DiscoveryResponder discovery_responder(1234);
 
-#define ETH_ADDR 1
-#define ETH_POWER_PIN 16
-#define ETH_MDC_PIN 23
-#define ETH_MDIO_PIN 18
-#define ETH_RST_PIN 16
-#define ETH_TYPE ETH_PHY_LAN8720
+String session_id;
+uint32_t uart_bytes = 0;
 
-const char *ssid = "";
-const char *password = "";
-
-WiFiServer tcpServer(1234);
-WiFiClient client;
-
-bool eth_connected = false;
-String ipAddr = "";
-String macAddr = "";
-
-// Draw OLED info screen
-void drawOLED(bool flash = false)
-{
-  display.clearDisplay();
-  display.setTextColor(SSD1306_WHITE);
-
-  display.setTextSize(2);
-  display.setCursor(25, 0);
-  display.println("DakDash");
-
-  display.setTextSize(1);
-  display.setCursor(0, 26);
-  display.print("SSID: ");
-  display.println(ssid);
-
-  display.setCursor(0, 36);
-  display.print("IP: ");
-  display.println(ipAddr);
-
-  display.setCursor(0, 46);
-  display.print("MAC: ");
-  display.println(macAddr);
-
-  if (flash)
-  {
-    display.fillRect(0, 0, OLED_COLOR_INDICATOR_SIZE, OLED_COLOR_INDICATOR_SIZE, SSD1306_WHITE);
-  }
-
-  display.display();
-}
-
-void WiFiEvent(WiFiEvent_t event)
-{
-  switch (event)
-  {
-  case ARDUINO_EVENT_ETH_START:
-    Serial.println("Ethernet started");
-    ETH.setHostname("WT32-ETH01");
-    break;
-  case ARDUINO_EVENT_ETH_CONNECTED:
-    Serial.println("Ethernet connected");
-    break;
-  case ARDUINO_EVENT_ETH_GOT_IP:
-    Serial.print("Ethernet IP Address: ");
-    ipAddr = ETH.localIP().toString();
-    Serial.println(ipAddr);
-    macAddr = ETH.macAddress();
-    eth_connected = true;
-    drawOLED(); // Update screen
-    break;
-  case ARDUINO_EVENT_ETH_DISCONNECTED:
-  case ARDUINO_EVENT_ETH_STOP:
-    Serial.println("Ethernet disconnected");
-    eth_connected = false;
-    break;
-  default:
-    break;
-  }
-}
-
-void setup()
-{
+void setup() {
   Wire.begin(4, 5);
   Serial.begin(19200);
-
-  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
-  {
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;)
-      ;
-  }
-
-  display.clearDisplay();
-  display.setTextColor(SSD1306_WHITE);
-
-  display.setTextSize(2);
-  display.setCursor(25, 0);
-  display.println("DakDash");
-  display.setTextSize(1);
-  display.setCursor(10, 28);
-  display.print("SSID: ");
-  display.println(ssid);
-
-  display.display();
-
-  WiFi.onEvent(WiFiEvent);
-  ETH.begin(ETH_TYPE, ETH_ADDR, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_POWER_PIN, ETH_CLOCK_GPIO17_OUT);
-
-  unsigned long start = millis();
-  while (!eth_connected && millis() - start < 15000)
-  {
-    delay(100);
-  }
-
-  if (!eth_connected)
-  {
-    Serial.println("Falling back to Wi-Fi...");
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      delay(500);
-      Serial.print(".");
-    }
-    ipAddr = WiFi.localIP().toString();
-    Serial.print("WiFi IP Address: ");
-    Serial.println(ipAddr);
-    macAddr = WiFi.macAddress();
-  }
-
-  drawOLED();
-  tcpServer.begin();
-  Serial.println("TCP server started");
+  display_controller.begin();
+  session_id = String("boot-") + String(esp_random(), HEX);
+  network_manager.begin(millis());
 }
 
-void loop()
-{
-  if (!client || !client.connected())
-  {
-    client = tcpServer.available();
-  }
-  bool flash = false;
-
-  if (client && client.connected())
-  {
-    while (Serial.available())
-    {
-      client.write(Serial.read());
-      flash = true;
+void loop() {
+  dakdash::CompletedFrame completed{};
+  while (Serial.available()) {
+    const int value = Serial.read();
+    if (value < 0) break;
+    ++uart_bytes;
+    if (serial_framer.push(static_cast<uint8_t>(value), completed)) {
+      latest_frame.publish(completed, millis());
     }
   }
 
-  if (flash)
-  { // flash if client is connected and serial message read
-    drawOLED(true);
-    delay(60);
-    drawOLED(false);
-  }
+  const uint32_t now_ms = millis();
+  network_manager.tick(now_ms);
+  const bool address_changed = network_manager.take_address_changed();
+  discovery_responder.tick(
+      now_ms, network_manager.ready(), address_changed,
+      network_manager.device_id().c_str(), session_id.c_str(),
+      network_manager.ip_address().c_str());
+  connection_server.set_serial_metrics(uart_bytes,
+                                       serial_framer.rejected_frames());
+  connection_server.tick(now_ms, network_manager.ready(), address_changed,
+                         network_manager.device_id().c_str(),
+                         session_id.c_str(), latest_frame);
+
+  const dakdash::DisplayStatus status{
+      network_manager.ip_address().c_str(),
+      network_manager.device_id().c_str(),
+      network_manager.state_text(),
+      connection_server.state_text(),
+      latest_frame.state_seq(),
+      latest_frame.received_ms(),
+  };
+  display_controller.tick(now_ms, status);
 }

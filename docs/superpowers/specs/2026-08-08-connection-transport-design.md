@@ -32,11 +32,12 @@ The recovery archive will contain sanitized legacy source, a build manifest, com
 
 1. DakDash attempts TCP port `1234` at the saved DHCP-reserved address and sends `CLIENT_HELLO` with its supported protocol version and expected device ID.
 2. The ESP32 validates the request and returns `HELLO` with its identity and session details. DakDash checks the expected stable `device_id`; an IP address alone is not identity.
-3. If direct connection fails, DakDash sends three UDP discovery requests over approximately three seconds. Each contains a random request nonce and optional expected device ID.
-4. The matching ESP32 replies by unicast. Responses are rate-limited and echo the nonce.
-5. DakDash connects to the returned address. If discovery fails, the backend reports that manual address entry is required and stops probing.
+3. If direct connection fails, DakDash first checks the local ARP cache for the MAC encoded by the expected device ID. This lookup sends no network traffic.
+4. If the passive lookup misses, DakDash sends at most three UDP discovery requests within one 500 ms window. Each contains a random request nonce and the expected device ID.
+5. The matching ESP32 replies by unicast. Responses are spaced by at least 250 ms and limited to three in any rolling three-second window.
+6. DakDash validates the returned identity over TCP. If discovery fails, the backend reports that manual address entry is required and stops probing for that service start.
 
-Discovery may be blocked by school VLAN or broadcast policy, so the reserved address and manual entry remain dependable fallbacks.
+Discovery may be blocked by school VLAN or broadcast policy, so the reserved address and manual entry remain dependable fallbacks. Discovery never scans the subnet and never runs continuously.
 
 ## Versioned Wire Protocol
 
