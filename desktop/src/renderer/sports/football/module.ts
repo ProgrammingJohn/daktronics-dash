@@ -71,6 +71,7 @@ const bindings: readonly SvgBinding<FootballView>[] = [
   { operation: "text", selector: '[data-score-field="clock"]', value: (view) => view.clock_text },
   { operation: "text", selector: '[data-score-field="period"]', value: (view) => view.period_text },
   { operation: "text", selector: '[data-score-field="down_text"]', value: (view) => view.down_text },
+  { operation: "style", selector: '[data-score-field="down_text"]', property: "fill", value: (view) => `var(--${view.possession}_team_text)` },
   { operation: "attribute", selector: '[data-score-field="possession"]', attribute: "data-possession", value: (view) => view.possession },
   ...timeout_bindings("home"),
   ...timeout_bindings("away")

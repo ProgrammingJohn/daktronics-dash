@@ -49,4 +49,26 @@ describe("football_module", () => {
     expect(away_used).not.toHaveAttribute("hidden");
     expect(away_used?.style.getPropertyValue("fill")).toBe("gray");
   });
+
+  test("colors the down text with the possessing team's text token", () => {
+    const renderer = new ScoreboardRenderer(document.createElement("div"));
+    renderer.mount(football_svg, football_module.bindings);
+    const down_text = renderer.shadowRoot.querySelector<SVGElement>(
+      '[data-score-field="down_text"]'
+    );
+
+    renderer.render(
+      football_module.derive_view(
+        football_module.score_schema.parse({ ...football_live, home_possesion: true })
+      )
+    );
+    expect(down_text?.style.getPropertyValue("fill")).toBe("var(--home_team_text)");
+
+    renderer.render(
+      football_module.derive_view(
+        football_module.score_schema.parse({ ...football_live, home_possesion: false })
+      )
+    );
+    expect(down_text?.style.getPropertyValue("fill")).toBe("var(--away_team_text)");
+  });
 });
