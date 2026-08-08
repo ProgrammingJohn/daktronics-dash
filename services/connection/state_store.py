@@ -50,6 +50,7 @@ class LatestStateStore:
         self._state_seq = None
         self._received_ns = None
         self._serial_age_ms = None
+        self._published_generation = None
         self._counters = {
             "published": 0,
             "old_generation": 0,
@@ -103,6 +104,7 @@ class LatestStateStore:
             self._state_seq = envelope.state_seq
             self._received_ns = received_ns
             self._serial_age_ms = envelope.serial_age_ms
+            self._published_generation = generation
             self._counters["published"] += 1
             return True
 
@@ -142,6 +144,8 @@ class LatestStateStore:
             return HealthState.WAITING_FOR_CLIENT
         if now_ns - self._heartbeat_ns >= self._heartbeat_timeout_ns:
             return HealthState.DISCONNECTED
+        if self._published_generation != self._generation:
+            return HealthState.STALE_SOURCE
         if self._received_ns is None:
             return HealthState.STALE_SOURCE
         if source_age_ms * 1_000_000 >= self._source_stale_ns:

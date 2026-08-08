@@ -48,3 +48,62 @@ class StateStoreTests(unittest.TestCase):
         view = store.view(0)
         self.assertEqual(view.source_age_ms, 2000)
         self.assertEqual(view.health, HealthState.STALE_SOURCE)
+
+    def test_new_generation_requires_publish_before_reporting_live(self):
+        store = LatestStateStore()
+        first = store.start_generation()
+        store.set_transport(first, True, 0)
+        store.record_heartbeat(first, 0)
+        store.publish(first, snapshot(1), {"home_score": 22}, 0)
+
+        second = store.start_generation()
+        store.set_transport(second, True, 1_000_000_000)
+        store.record_heartbeat(second, 1_000_000_000)
+        view = store.view(1_000_000_000)
+
+        self.assertEqual(view.score, {"home_score": 22})
+        self.assertNotEqual(view.health, HealthState.LIVE)
+
+    def test_rejects_changed_session_in_current_generation(self):
+        store = LatestStateStore()
+        generation = store.start_generation()
+        self.assertTrue(store.publish(
+            generation, snapshot(1, session_id="first-session"), {"home_score": 1}, 0
+        ))
+        self.assertFalse(store.publish(
+            generation, snapshot(2, session_id="second-session"), {"home_score": 2}, 1
+        ))
+
+        view = store.view(1)
+        self.assertEqual(view.score, {"home_score": 1})
+        self.assertEqual(view.session_id, "first-session")
+        self.assertEqual(view.counters["old_generation"], 1)
+
+    def test_views_expose_immutable_score_and_counter_snapshots(self):
+        store = LatestStateStore()
+        generation = store.start_generation()
+        store.publish(generation, snapshot(1), {"home_score": 1}, 0)
+        view = store.view(0)
+
+        with self.assertRaises(TypeError):
+            view.score["home_score"] = 2
+        with self.assertRaises(TypeError):
+            view.counters["published"] = 0
+        self.assertEqual(store.view(0).score, {"home_score": 1})
+        self.assertEqual(store.view(0).counters["published"], 1)
+
+    def test_counts_generation_order_and_disconnect_rejections(self):
+        store = LatestStateStore()
+        generation = store.start_generation()
+        self.assertFalse(store.publish(generation - 1, snapshot(1), {"home_score": 1}, 0))
+        store.set_transport(generation, True, 0)
+        self.assertTrue(store.publish(generation, snapshot(2), {"home_score": 2}, 0))
+        self.assertFalse(store.publish(generation, snapshot(2), {"home_score": 2}, 1))
+        store.set_transport(generation, False, 1)
+
+        self.assertEqual(store.view(1).counters, {
+            "published": 1,
+            "old_generation": 1,
+            "out_of_order": 1,
+            "disconnects": 1,
+        })
