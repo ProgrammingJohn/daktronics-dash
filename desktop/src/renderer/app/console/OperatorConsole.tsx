@@ -1,6 +1,7 @@
 import { select_display_snapshot } from "../../state/session_reducer";
 import { use_session } from "../../state/SessionProvider";
 import { get_sport } from "../../sports/registry";
+import { ManualControlDeck } from "../manual/ManualControlDeck";
 import { ConnectionBadge } from "./ConnectionBadge";
 import { ProgramPreview } from "./ProgramPreview";
 import styles from "./OperatorConsole.module.css";
@@ -68,7 +69,7 @@ export function OperatorConsole() {
                 Take manual control…
               </button>
             )}
-            {!daktronics_authority && <div className={styles.manualPlaceholder}>Manual controls</div>}
+            {!daktronics_authority && <ManualControlDeck />}
           </section>
 
           <details className={styles.details}>

@@ -109,12 +109,16 @@ export const basketball_module: SportModule<BasketballScore, BasketballView> = {
   }),
   bindings,
   controls: [
-    { field: "score", kind: "team_counters", label: "Score" },
-    { field: "clock", kind: "clock", label: "Game clock" },
-    { field: "period", kind: "counter", label: "Period" },
-    { field: "fouls", kind: "team_counters", label: "Fouls" },
-    { field: "timeouts", kind: "team_counters", label: "Timeouts" },
-    { field: "bonus", kind: "team_toggles", label: "Bonus" }
+    { id: "home_score", kind: "counter", label: "Home score", shortcut: "h", min: 0, max: 199, value: (score) => score.home_score, reduce: (score, input) => ({ ...score, home_score: Number(input) }) },
+    { id: "away_score", kind: "counter", label: "Away score", shortcut: "a", min: 0, max: 199, value: (score) => score.away_score, reduce: (score, input) => ({ ...score, away_score: Number(input) }) },
+    { id: "clock", kind: "clock", label: "Game clock", value: (score) => { const [minutes, seconds] = score.clock.split(":"); return { minutes: Number(minutes), seconds: Number(seconds) }; }, reduce: (score, input) => { const clock = input as { minutes: number; seconds: number }; return { ...score, clock: `${clock.minutes}:${String(clock.seconds).padStart(2, "0")}` }; } },
+    { id: "period", kind: "counter", label: "Period", min: 0, max: 12, value: (score) => score.period, reduce: (score, input) => ({ ...score, period: Number(input) }) },
+    { id: "home_fouls", kind: "counter", label: "Home fouls", min: 0, max: 99, value: (score) => score.home_fouls, reduce: (score, input) => ({ ...score, home_fouls: Number(input), away_bonus: Number(input) >= 5 }) },
+    { id: "away_fouls", kind: "counter", label: "Away fouls", min: 0, max: 99, value: (score) => score.away_fouls, reduce: (score, input) => ({ ...score, away_fouls: Number(input), home_bonus: Number(input) >= 5 }) },
+    { id: "home_timeouts", kind: "counter", label: "Home timeouts", min: 0, max: 5, value: (score) => score.home_timeouts, reduce: (score, input) => ({ ...score, home_timeouts: Number(input) }) },
+    { id: "away_timeouts", kind: "counter", label: "Away timeouts", min: 0, max: 5, value: (score) => score.away_timeouts, reduce: (score, input) => ({ ...score, away_timeouts: Number(input) }) },
+    { id: "home_bonus", kind: "toggle", label: "Home bonus", value: (score) => score.home_bonus, reduce: (score, input) => ({ ...score, home_bonus: Boolean(input) }) },
+    { id: "away_bonus", kind: "toggle", label: "Away bonus", value: (score) => score.away_bonus, reduce: (score, input) => ({ ...score, away_bonus: Boolean(input) }) }
   ],
   appearance: {
     tokens: [

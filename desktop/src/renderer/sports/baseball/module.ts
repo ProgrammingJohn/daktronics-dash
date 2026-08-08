@@ -77,11 +77,14 @@ export const baseball_module: SportModule<BaseballScore, BaseballView> = {
   }),
   bindings,
   controls: [
-    { field: "home_score", kind: "counter", label: "Home score" },
-    { field: "away_score", kind: "counter", label: "Away score" },
-    { field: "inning", kind: "inning", label: "Inning" },
-    { field: "count", kind: "count", label: "Count and outs" },
-    { field: "bases", kind: "bases", label: "Bases" }
+    { id: "home_score", kind: "counter", label: "Home score", shortcut: "h", min: 0, max: 99, value: (score) => score.home_score, reduce: (score, input) => ({ ...score, home_score: Number(input) }) },
+    { id: "away_score", kind: "counter", label: "Away score", shortcut: "a", min: 0, max: 99, value: (score) => score.away_score, reduce: (score, input) => ({ ...score, away_score: Number(input) }) },
+    { id: "balls", kind: "counter", label: "Balls", shortcut: "b", min: 0, max: 3, value: (score) => Number(score.strikes_and_balls.split(" - ")[0] ?? 0), reduce: (score, input) => ({ ...score, strikes_and_balls: `${Number(input)} - ${score.strikes_and_balls.split(" - ")[1] ?? "0"}` }) },
+    { id: "strikes", kind: "counter", label: "Strikes", shortcut: "s", min: 0, max: 2, value: (score) => Number(score.strikes_and_balls.split(" - ")[1] ?? 0), reduce: (score, input) => ({ ...score, strikes_and_balls: `${score.strikes_and_balls.split(" - ")[0] ?? "0"} - ${Number(input)}` }) },
+    { id: "outs", kind: "counter", label: "Outs", shortcut: "o", min: 0, max: 2, value: (score) => Number.parseInt(score.out_text, 10) || 0, reduce: (score, input) => ({ ...score, out_text: `${Number(input)} ${Number(input) === 1 ? "out" : "outs"}` }) },
+    { id: "base_one", kind: "toggle", label: "First base", shortcut: "1", value: (score) => score.base_one, reduce: (score, input) => ({ ...score, base_one: Boolean(input) }) },
+    { id: "base_two", kind: "toggle", label: "Second base", shortcut: "2", value: (score) => score.base_two, reduce: (score, input) => ({ ...score, base_two: Boolean(input) }) },
+    { id: "base_three", kind: "toggle", label: "Third base", shortcut: "3", value: (score) => score.base_three, reduce: (score, input) => ({ ...score, base_three: Boolean(input) }) }
   ],
   appearance: {
     tokens: [

@@ -27,9 +27,20 @@ export type SvgBinding<TView> =
       value: (view: TView) => string;
     };
 
-export type ControlDefinition<TScore> = Record<string, unknown> & {
-  readonly __score?: TScore;
-};
+export type ControlInput = number | string | boolean | { minutes: number; seconds: number };
+
+export interface ControlDefinition<TScore> {
+  id: string;
+  label: string;
+  kind: "counter" | "toggle" | "choice" | "clock" | "action";
+  shortcut?: string;
+  shortcut_delta?: number;
+  min?: number;
+  max?: number;
+  options?: readonly { value: string; label: string }[];
+  value(score: TScore): ControlInput;
+  reduce(score: TScore, input: ControlInput): TScore;
+}
 
 export type AppearanceDefinition = Record<string, unknown>;
 
