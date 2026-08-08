@@ -115,18 +115,24 @@ class TcpRecordDecoder:
         if not isinstance(chunk, (bytes, bytearray, memoryview)):
             raise ProtocolError("TCP chunk must be bytes")
         incoming = memoryview(chunk)
-        if len(self._buffer) < 4:
-            header_bytes = min(4 - len(self._buffer), len(incoming))
-            self._buffer.extend(incoming[:header_bytes])
-            incoming = incoming[header_bytes:]
-            if len(self._buffer) < 4:
-                return []
-        self._reject_oversized_announced_record()
-        self._buffer.extend(incoming)
+        offset = 0
         messages = []
-        while len(self._buffer) >= 4:
+        while offset < len(incoming):
+            if len(self._buffer) < 4:
+                header_bytes = min(4 - len(self._buffer), len(incoming) - offset)
+                self._buffer.extend(incoming[offset:offset + header_bytes])
+                offset += header_bytes
+                if len(self._buffer) < 4:
+                    break
+
             body_length = self._reject_oversized_announced_record()
             record_length = 4 + body_length
+            body_bytes = len(self._buffer) - 4
+            if body_bytes < body_length:
+                needed = body_length - body_bytes
+                accepted = min(needed, len(incoming) - offset)
+                self._buffer.extend(incoming[offset:offset + accepted])
+                offset += accepted
             if len(self._buffer) < record_length:
                 break
             body = bytes(self._buffer[4:record_length])
