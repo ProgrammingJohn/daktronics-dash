@@ -93,6 +93,29 @@ export function SessionProvider({ client, children }: SessionProviderProps) {
     [client]
   );
 
+  useEffect(() => {
+    const generation = generation_ref.current + 1;
+    generation_ref.current = generation;
+    active_controller_ref.current?.abort();
+    const controller = new AbortController();
+    active_controller_ref.current = controller;
+    dispatch({ type: "restore_requested", generation });
+
+    void client
+      .get_active_snapshot(controller.signal)
+      .then((candidate) => {
+        if (controller.signal.aborted) return;
+        const snapshot = session_snapshot_schema.parse(candidate);
+        dispatch({ type: "restore_succeeded", generation, snapshot });
+        subscribe(snapshot, generation, controller);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      if (active_controller_ref.current === controller) controller.abort();
+    };
+  }, [client, subscribe]);
+
   const launch = useCallback(
     async (input: LaunchSessionInput): Promise<void> => {
       const generation = generation_ref.current + 1;

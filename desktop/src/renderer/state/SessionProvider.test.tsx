@@ -35,6 +35,26 @@ function Harness() {
 }
 
 describe("SessionProvider", () => {
+  test("restores and subscribes to an already-active backend session", async () => {
+    const client = new FakeBackendClient();
+    const launched = await client.launch_session({ sport: "football", source: "manual" });
+    await client.submit_manual_transition({
+      session_id: launched.session.session_id,
+      expected_revision: launched.scoreboard.revision,
+      fields: { ...launched.scoreboard.fields, home_score: 12 }
+    });
+
+    render(
+      <SessionProvider client={client}>
+        <Harness />
+      </SessionProvider>
+    );
+
+    await waitFor(() => expect(screen.getByTestId("phase")).toHaveTextContent("active"));
+    expect(screen.getByTestId("score")).toHaveTextContent("12");
+    expect(client.active_subscription_count).toBe(1);
+  });
+
   test("launches, subscribes, takes over, submits manual state, and aborts on unmount", async () => {
     const client = new FakeBackendClient();
     const rendered = render(

@@ -6,6 +6,7 @@ import type {
   SessionSnapshot,
   SportId
 } from "../domain/session";
+import { session_snapshot_schema, sport_id_schema } from "../domain/session";
 import { get_sport, list_sports } from "../sports/registry";
 import type { BackendClient } from "./BackendClient";
 
@@ -16,6 +17,21 @@ interface Subscription {
 }
 
 const SYNC_FRESHNESS_MS = 2000;
+const STORAGE_KEY = "dakdash.fake-backend.v1";
+
+export interface FakeBackendStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): unknown;
+  removeItem(key: string): unknown;
+}
+
+interface PersistedState {
+  active_snapshot: SessionSnapshot | null;
+  last_synced_snapshot: SessionSnapshot | null;
+  last_synced_at: number | null;
+  next_session_number: number;
+  appearances: [SportId, AppearancePayload][];
+}
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -63,6 +79,10 @@ export class FakeBackendClient implements BackendClient {
   private next_session_number = 1;
   private readonly subscriptions = new Set<Subscription>();
   private readonly appearances = new Map<SportId, AppearancePayload>();
+
+  constructor(private readonly storage?: FakeBackendStorage) {
+    this.restore();
+  }
 
   get active_subscription_count(): number {
     return this.subscriptions.size;
@@ -119,6 +139,8 @@ export class FakeBackendClient implements BackendClient {
       this.last_synced_at = null;
     }
 
+    this.persist();
+
     return clone(this.active_snapshot);
   }
 
@@ -127,6 +149,7 @@ export class FakeBackendClient implements BackendClient {
     this.active_snapshot = null;
     this.last_synced_snapshot = null;
     this.last_synced_at = null;
+    this.persist();
   }
 
   async get_active_snapshot(signal?: AbortSignal): Promise<SessionSnapshot> {
@@ -159,6 +182,7 @@ export class FakeBackendClient implements BackendClient {
     this.active_snapshot = this.next_snapshot(current, validated_fields, "daktronics");
     this.last_synced_snapshot = clone(this.active_snapshot);
     this.last_synced_at = Date.now();
+    this.persist();
     this.emit(this.active_snapshot);
     return clone(this.active_snapshot);
   }
@@ -175,6 +199,7 @@ export class FakeBackendClient implements BackendClient {
     }
 
     this.active_snapshot = this.next_snapshot(current, current.scoreboard.fields, "manual");
+    this.persist();
     this.emit(this.active_snapshot);
     return clone(this.active_snapshot);
   }
@@ -204,6 +229,7 @@ export class FakeBackendClient implements BackendClient {
     );
     this.last_synced_snapshot = clone(this.active_snapshot);
     this.last_synced_at = Date.now();
+    this.persist();
     this.emit(this.active_snapshot);
     return clone(this.active_snapshot);
   }
@@ -222,6 +248,7 @@ export class FakeBackendClient implements BackendClient {
 
     const fields = get_sport(current.session.sport).score_schema.parse(transition.fields);
     this.active_snapshot = this.next_snapshot(current, fields, "manual");
+    this.persist();
     this.emit(this.active_snapshot);
     return clone(this.active_snapshot);
   }
@@ -237,6 +264,7 @@ export class FakeBackendClient implements BackendClient {
   ): Promise<AppearancePayload> {
     signal?.throwIfAborted();
     this.appearances.set(payload.sport, clone(payload));
+    this.persist();
     return clone(payload);
   }
 
@@ -281,6 +309,71 @@ export class FakeBackendClient implements BackendClient {
     for (const subscription of this.subscriptions) {
       if (subscription.session_id === snapshot.session.session_id) {
         subscription.on_snapshot(clone(snapshot));
+      }
+    }
+  }
+
+  private persist(): void {
+    if (this.storage === undefined) return;
+    const state: PersistedState = {
+      active_snapshot: this.active_snapshot,
+      last_synced_snapshot: this.last_synced_snapshot,
+      last_synced_at: this.last_synced_at,
+      next_session_number: this.next_session_number,
+      appearances: [...this.appearances.entries()]
+    };
+    try {
+      this.storage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Development persistence must never interrupt live controls.
+    }
+  }
+
+  private restore(): void {
+    if (this.storage === undefined) return;
+    try {
+      const raw = this.storage.getItem(STORAGE_KEY);
+      if (raw === null) return;
+      const candidate = JSON.parse(raw) as Partial<PersistedState>;
+      this.active_snapshot =
+        candidate.active_snapshot === null || candidate.active_snapshot === undefined
+          ? null
+          : session_snapshot_schema.parse(candidate.active_snapshot);
+      this.last_synced_snapshot =
+        candidate.last_synced_snapshot === null || candidate.last_synced_snapshot === undefined
+          ? null
+          : session_snapshot_schema.parse(candidate.last_synced_snapshot);
+      this.last_synced_at =
+        typeof candidate.last_synced_at === "number" ? candidate.last_synced_at : null;
+      this.next_session_number =
+        typeof candidate.next_session_number === "number" && candidate.next_session_number > 0
+          ? Math.floor(candidate.next_session_number)
+          : 1;
+      if (Array.isArray(candidate.appearances)) {
+        for (const entry of candidate.appearances) {
+          if (!Array.isArray(entry) || entry.length !== 2) continue;
+          const sport = sport_id_schema.safeParse(entry[0]);
+          const payload = entry[1];
+          if (
+            sport.success &&
+            payload !== null &&
+            typeof payload === "object" &&
+            (payload as AppearancePayload).sport === sport.data
+          ) {
+            this.appearances.set(sport.data, clone(payload as AppearancePayload));
+          }
+        }
+      }
+    } catch {
+      this.active_snapshot = null;
+      this.last_synced_snapshot = null;
+      this.last_synced_at = null;
+      this.next_session_number = 1;
+      this.appearances.clear();
+      try {
+        this.storage.removeItem(STORAGE_KEY);
+      } catch {
+        // Ignore unavailable development storage.
       }
     }
   }

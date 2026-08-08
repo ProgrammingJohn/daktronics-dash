@@ -6,7 +6,7 @@ import { SessionProvider } from "./state/SessionProvider";
 import "./styles/global.css";
 import "./styles/tokens.css";
 
-const client = new FakeBackendClient();
+const client = new FakeBackendClient(window.localStorage);
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root");

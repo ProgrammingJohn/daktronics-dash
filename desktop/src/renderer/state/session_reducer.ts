@@ -21,6 +21,8 @@ export const initial_session_state: SessionState = {
 };
 
 export type SessionAction =
+  | { type: "restore_requested"; generation: number }
+  | { type: "restore_succeeded"; generation: number; snapshot: SessionSnapshot }
   | { type: "launch_requested"; generation: number }
   | { type: "launch_succeeded"; generation: number; snapshot: SessionSnapshot }
   | { type: "launch_failed"; generation: number; error: string }
@@ -49,6 +51,18 @@ export function select_display_snapshot(state: SessionState): SessionSnapshot | 
 
 export function session_reducer(state: SessionState, action: SessionAction): SessionState {
   switch (action.type) {
+    case "restore_requested":
+      return { ...state, generation: action.generation, last_error: null };
+    case "restore_succeeded":
+      if (!generation_matches(state, action.generation)) return state;
+      return {
+        ...state,
+        phase: "active",
+        accepted: action.snapshot,
+        optimistic: null,
+        last_error: null,
+        undo_stack: []
+      };
     case "launch_requested":
       return {
         phase: "launching",

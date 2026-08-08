@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { FakeBackendClient } from "./FakeBackendClient";
 
+function memory_storage() {
+  const values = new Map<string, string>();
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => values.delete(key)
+  };
+}
+
 describe("FakeBackendClient", () => {
   afterEach(() => vi.useRealTimers());
 
@@ -106,5 +115,30 @@ describe("FakeBackendClient", () => {
     client.subscribe(launched.session.session_id, () => undefined, () => undefined, subscription.signal);
     subscription.abort();
     expect(client.active_subscription_count).toBe(0);
+  });
+
+  test("restores the active development session and appearance from storage", async () => {
+    const storage = memory_storage();
+    const first = new FakeBackendClient(storage);
+    const launched = await first.launch_session({ sport: "football", source: "manual" });
+    const updated = await first.submit_manual_transition({
+      session_id: launched.session.session_id,
+      expected_revision: launched.scoreboard.revision,
+      fields: { ...launched.scoreboard.fields, home_score: 17 }
+    });
+    const appearance = await first.load_appearance("football");
+    appearance.profiles[0]!.display_name = "Blue Devils";
+    await first.save_appearance(appearance);
+
+    const restored = new FakeBackendClient(storage);
+    await expect(restored.get_active_snapshot()).resolves.toEqual(updated);
+    expect((await restored.load_appearance("football")).profiles[0]?.display_name).toBe(
+      "Blue Devils"
+    );
+
+    await restored.stop_session();
+    await expect(new FakeBackendClient(storage).get_active_snapshot()).rejects.toThrow(
+      "No active session"
+    );
   });
 });
