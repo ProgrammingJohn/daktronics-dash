@@ -25,6 +25,23 @@ int main(int argc, char** argv) {
     std::cout << expected;
     return 0;
   }
+  if (mode == "decode-discover") {
+    const char request[] =
+        "{\"details\":{\"nonce\":\"0011223344556677\"},"
+        "\"device_id\":\"wt32-aabbccddeeff\","
+        "\"message_type\":\"DISCOVER\",\"packet_seq\":0,"
+        "\"payload\":\"\",\"payload_crc32\":0,\"protocol_version\":1,"
+        "\"serial_age_ms\":0,\"session_id\":\"\",\"state_seq\":0,"
+        "\"uptime_ms\":0}";
+    char nonce[17]{};
+    if (!dakdash::decode_discover_json(
+            request, std::strlen(request), "wt32-aabbccddeeff",
+            nonce, sizeof(nonce))) {
+      return 4;
+    }
+    std::cout << nonce;
+    return 0;
+  }
 
   ProtocolFields fields{"wt32-aabbccddeeff", "boot-1234", 9, 7, 2500, 4};
   char output[2048]{};
@@ -35,6 +52,10 @@ int main(int argc, char** argv) {
     HealthMetrics metrics{100, 2, 3, 4, 5};
     length = dakdash::encode_heartbeat_json(fields, metrics, output,
                                              sizeof(output));
+  } else if (mode == "discover-response") {
+    length = dakdash::encode_discover_response_json(
+        fields, "0011223344556677", "10.93.37.138", 1234,
+        output, sizeof(output));
   } else {
     CompletedFrame frame{};
     const char payload[] = "12:00HOME";

@@ -10,6 +10,8 @@ ADAPTERS = (
     "connection_server.cpp",
     "display_controller.h",
     "display_controller.cpp",
+    "discovery_responder.h",
+    "discovery_responder.cpp",
 )
 
 
