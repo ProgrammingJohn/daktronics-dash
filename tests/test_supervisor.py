@@ -234,6 +234,40 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(view.state_seq, 7)
         self.assertGreaterEqual(supervisor.protocol_errors, 1)
 
+    def test_same_session_duplicate_snapshot_is_ignored_on_reconnect(self):
+        payload = b"12:00HOME      GUEST     2233146311<>403339"
+        first = ClosingSequenceFakeTransport(
+            "boot-1", [replace(snapshot(7, payload, "boot-1"), packet_seq=9)]
+        )
+        second = SequenceFakeTransport([
+            replace(snapshot(7, payload, "boot-1"), packet_seq=11),
+            replace(snapshot(8, payload, "boot-1"), packet_seq=12),
+        ])
+
+        def second_handshake(timeout_s):
+            second.handshaken.set()
+            return Envelope(
+                PROTOCOL_VERSION, MessageType.HELLO,
+                "wt32-aabbccddeeff", "boot-1", 10, 0, 100, 9999,
+            )
+
+        second.handshake = second_handshake
+        factory = FactorySequence([first, second])
+        store = LatestStateStore()
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234, "wt32-aabbccddeeff",
+            store, transport_factory=factory,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.0
+        while store.view(time.monotonic_ns()).revision < 2 and time.monotonic() < deadline:
+            time.sleep(0.005)
+        supervisor.stop()
+        view = store.view(time.monotonic_ns())
+        self.assertEqual(view.revision, 2)
+        self.assertEqual(view.state_seq, 8)
+        self.assertEqual(supervisor.protocol_errors, 0)
+
     def test_socket_timeout_waits_for_three_misses(self):
         import socket
 

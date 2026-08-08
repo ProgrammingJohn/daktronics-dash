@@ -98,8 +98,10 @@ class ConnectionSupervisor(threading.Thread):
                     elif envelope.message_type is MessageType.SNAPSHOT:
                         self._store.record_heartbeat(generation, received_ns)
                         if (session_state_seq is not None and
-                                envelope.state_seq <= session_state_seq):
-                            raise ProtocolError("state sequence did not increase")
+                                envelope.state_seq < session_state_seq):
+                            raise ProtocolError("state sequence rolled back")
+                        if envelope.state_seq == session_state_seq:
+                            continue
                         session_state_seq = envelope.state_seq
                         try:
                             score = parse_scoreboard_frame(self._sport, envelope.payload)

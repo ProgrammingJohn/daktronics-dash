@@ -31,6 +31,7 @@ void ConnectionServer::tick(uint32_t now_ms, bool network_ready,
     abandon_client();
     device_id_ = device_id;
     session_id_ = session_id;
+    delivery_cursor_.reset_session();
   }
 
   if (!client_ || !client_.connected()) {
@@ -164,10 +165,9 @@ void ConnectionServer::service_active(uint32_t now_ms,
                                              : now_ms - latest_frame.received_ms();
   char* json = reinterpret_cast<char*>(output_ + 4);
 
-  if (state_seq != 0 && state_seq != last_sent_state_seq_) {
-    if (state_seq > last_sent_state_seq_ + 1) {
-      metrics_.overwritten_frames += state_seq - last_sent_state_seq_ - 1;
-    }
+  const DeliveryDecision delivery = delivery_cursor_.evaluate(state_seq);
+  if (delivery.should_send) {
+    metrics_.overwritten_frames += delivery.overwritten_frames;
     ProtocolFields snapshot_fields = fields(now_ms, state_seq, serial_age);
     const std::size_t length = encode_snapshot_json(
         snapshot_fields, latest_frame.frame(), json, sizeof(output_) - 4);
@@ -175,7 +175,7 @@ void ConnectionServer::service_active(uint32_t now_ms,
       abandon_client(true);
       return;
     }
-    last_sent_state_seq_ = state_seq;
+    delivery_cursor_.mark_sent(state_seq);
     return;
   }
 
@@ -246,7 +246,6 @@ void ConnectionServer::abandon_client(bool write_failure) {
   expected_record_length_ = 0;
   output_length_ = 0;
   output_offset_ = 0;
-  last_sent_state_seq_ = 0;
 }
 
 ProtocolFields ConnectionServer::fields(uint32_t now_ms, uint32_t state_seq,
