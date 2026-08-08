@@ -1,5 +1,8 @@
 import type { SportId } from "../domain/session";
 import type { SportModule } from "./types";
+import { baseball_module } from "./baseball/module";
+import { basketball_module } from "./basketball/module";
+import { football_module } from "./football/module";
 
 export type AnySportModule = SportModule<any, any>;
 
@@ -31,4 +34,8 @@ export function list_sports(): readonly AnySportModule[] {
       return sport === undefined ? [] : [sport];
     })
   );
+}
+
+for (const sport of [baseball_module, basketball_module, football_module]) {
+  register_sport(sport);
 }

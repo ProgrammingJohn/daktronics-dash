@@ -1,39 +1,20 @@
-import { z } from "zod";
 import { describe, expect, it } from "vitest";
+import { baseball_module } from "./baseball/module";
 import { get_sport, list_sports, register_sport } from "./registry";
-import type { SportId, SportModule } from "./types";
-
-function sport_module(id: SportId): SportModule<Record<string, never>, Record<string, never>> {
-  return {
-    id,
-    display_name: id,
-    supported_sources: ["manual", "synced"],
-    score_schema: z.object({}),
-    initial_score: {},
-    derive_view: () => ({}),
-    bindings: [],
-    controls: [],
-    appearance: {}
-  };
-}
+import type { SportId } from "./types";
 
 describe("sport registry", () => {
   it("rejects unknown sport lookups", () => {
-    expect(() => get_sport("baseball")).toThrow("Unknown sport: baseball");
+    expect(() => get_sport("lacrosse" as SportId)).toThrow("Unknown sport: lacrosse");
   });
 
   it("rejects duplicate sport registration", () => {
-    register_sport(sport_module("football"));
-
-    expect(() => register_sport(sport_module("football"))).toThrow(
-      "Sport already registered: football"
+    expect(() => register_sport(baseball_module)).toThrow(
+      "Sport already registered: baseball"
     );
   });
 
   it("lists registered modules in canonical sport order as a frozen array", () => {
-    register_sport(sport_module("basketball"));
-    register_sport(sport_module("baseball"));
-
     const sports = list_sports();
 
     expect(sports.map((sport) => sport.id)).toEqual(["baseball", "basketball", "football"]);

@@ -4,6 +4,7 @@
   viewBox="0 0 510 254"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
+  data-appearance-field="scoreboard_root"
 >
   <style>
     @font-face {
@@ -49,22 +50,26 @@
       <g id="Bases">
         <path
           id="base_two"
+          data-score-field="base_two"
           d="M390.118 94.7091L416.546 68.3855C418.4 66.5382 421.182 66.5382 423.036 68.3855L449.464 94.7091C451.318 96.5564 451.318 99.3273 449.464 101.175L423.036 127.498C421.182 129.345 418.4 129.345 416.546 127.498L390.118 101.175C388.264 99.3273 388.264 96.5564 390.118 94.7091Z"
           fill="white"
         />
         <path
           id="base_one"
+          data-score-field="base_one"
           d="M431.845 136.273L458.273 109.949C460.127 108.102 462.909 108.102 464.764 109.949L491.191 136.273C493.046 138.12 493.046 140.891 491.191 142.738L464.764 169.062C462.909 170.909 460.127 170.909 458.273 169.062L431.845 142.738C429.991 140.891 429.991 138.12 431.845 136.273Z"
           fill="white"
         />
         <path
           id="base_three"
+          data-score-field="base_three"
           d="M348.391 136.273L374.818 109.949C376.673 108.102 379.455 108.102 381.309 109.949L407.736 136.273C409.591 138.12 409.591 140.891 407.736 142.738L381.309 169.062C379.455 170.909 376.673 170.909 374.818 169.062L348.391 142.738C346.536 140.891 346.536 138.12 348.391 136.273Z"
           fill="white"
         />
       </g>
       <text
         id="inning_text"
+        data-score-field="inning_text"
         fill="white"
         x="418"
         y="50"
@@ -79,6 +84,7 @@
       </text>
       <text
         id="strikes_and_balls"
+        data-score-field="count_text"
         fill="white"
         x="55"
         y="230"
@@ -93,6 +99,7 @@
       </text>
       <text
         id="out_text"
+        data-score-field="out_text"
         fill="white"
         x="418"
         y="230"
@@ -114,6 +121,8 @@
 
       <text
         id="away_team_name"
+        data-score-field="away_team_name"
+        data-appearance-field="away_team_name"
         fill="var(--away_team_text)"
         x="23.1819"
         y="60"
@@ -159,6 +168,7 @@
       </g>
       <text
         id="away_score"
+        data-score-field="away_score"
         fill="var(--away_team_text)"
         xml:space="preserve"
         style="white-space: normal"
@@ -174,6 +184,8 @@
 
       <text
         id="home_team_name"
+        data-score-field="home_team_name"
+        data-appearance-field="home_team_name"
         fill="var(--home_team_text)"
         x="23.1819"
         y="160"
@@ -188,6 +200,7 @@
       </text>
       <text
         id="home_score"
+        data-score-field="home_score"
         fill="var(--home_team_text)"
         xml:space="preserve"
         style="white-space: normal"

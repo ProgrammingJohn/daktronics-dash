@@ -4,6 +4,7 @@
   viewBox="0 0 761 101"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
+  data-appearance-field="scoreboard_root"
 >
   <style>
     @font-face {
@@ -41,6 +42,8 @@
       </g>
       <text
         id="away_team_name"
+        data-score-field="away_team_name"
+        data-appearance-field="away_team_name"
         
         fill="var(--away_team_text)"
         x="750"
@@ -56,6 +59,7 @@
       </text>
       <text
         id="away_fouls"
+        data-score-field="away_fouls"
         fill="var(--away_team_text)"
         x="750"
         y="75"
@@ -71,6 +75,7 @@
       <g id="AwayTimeouts">
         <ellipse
           id="away_timeouts_t1"
+          data-score-field="away_timeout_1"
           cx="595"
           cy="75"
           rx="5.42707"
@@ -79,6 +84,7 @@
         />
         <ellipse
           id="away_timeouts_t2"
+          data-score-field="away_timeout_2"
           cx="595"
           cy="60"
           rx="5.42707"
@@ -87,6 +93,7 @@
         />
         <ellipse
           id="away_timeouts_t3"
+          data-score-field="away_timeout_3"
           cx="595"
           cy="45"
           rx="5.42707"
@@ -95,6 +102,7 @@
         />
         <ellipse
           id="away_timeouts_t4"
+          data-score-field="away_timeout_4"
           cx="594.932"
           cy="30"
           rx="5.42707"
@@ -103,6 +111,7 @@
         />
         <ellipse
           id="away_timeouts_t5"
+          data-score-field="away_timeout_5"
           cx="594.932"
           cy="15"
           rx="5.42707"
@@ -113,6 +122,7 @@
     </g>
     <text
       id="away_score"
+      data-score-field="away_score"
       fill="var(--away_team_text)"
       x="525"
       y="65"
@@ -139,6 +149,8 @@
       </g>
       <text
         id="home_team_name"
+        data-score-field="home_team_name"
+        data-appearance-field="home_team_name"
         fill="var(--home_team_text)"
         x="18"
         y="55"
@@ -153,6 +165,7 @@
       </text>
       <text
         id="home_score"
+        data-score-field="home_score"
         fill="var(--home_team_text)"
         xml:space="preserve"
         style="white-space: normal"
@@ -167,6 +180,7 @@
       </text>
       <text
         id="home_fouls"
+        data-score-field="home_fouls"
         fill="var(--home_team_text)"
         x="18"
         y="75"
@@ -182,6 +196,7 @@
       <g id="HomeTimeouts">
         <ellipse
           id="home_timeouts_t5"
+          data-score-field="home_timeout_5"
           cx="166.068"
           cy="15"
           rx="5.42707"
@@ -190,6 +205,7 @@
         />
         <ellipse
           id="home_timeouts_t3"
+          data-score-field="home_timeout_3"
           cx="166.068"
           cy="45"
           rx="5.42707"
@@ -198,6 +214,7 @@
         />
         <ellipse
           id="home_timeouts_t2"
+          data-score-field="home_timeout_2"
           cx="166.068"
           cy="60"
           rx="5.42707"
@@ -206,6 +223,7 @@
         />
         <ellipse
           id="home_timeouts_t4"
+          data-score-field="home_timeout_4"
           cx="166.068"
           cy="30"
           rx="5.42707"
@@ -214,6 +232,7 @@
         />
         <ellipse
           id="home_timeouts_t1"
+          data-score-field="home_timeout_1"
           cx="166.068"
           cy="75"
           rx="5.42707"
@@ -224,11 +243,13 @@
     </g>
     <text
       id="home_bonus_tag"
+      data-score-field="home_bonus"
+      hidden="hidden"
       x="310"
       y="76"
       fill="#FDC11D"
       xml:space="preserve"
-      style="white-space: normal; display: none"
+      style="white-space: normal"
       font-family="Tahoma"
       font-size="20"
       font-weight="bold"
@@ -238,6 +259,7 @@
     </text>
     <text
       id="clock"
+      data-score-field="clock"
       fill="white"
       x="383"
       y="41.3789"
@@ -252,11 +274,13 @@
     </text>
     <text
       id="away_bonus_tag"
+      data-score-field="away_bonus"
+      hidden="hidden"
       x="440"
       y="76"
       fill="#FDC11D"
       xml:space="preserve"
-      style="white-space: normal; display: none"
+      style="white-space: normal"
       font-family="Tahoma"
       font-size="20"
       font-weight="bold"
@@ -266,6 +290,7 @@
     </text>
     <text
       id="period"
+      data-score-field="period"
       fill="#FDC11D"
       x="380"
       y="77.4092"
