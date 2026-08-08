@@ -1,23 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import baseball_svg from "../../../../scoreboard_svgs/baseball.svg?raw";
-import basketball_svg from "../../../../scoreboard_svgs/basketball.svg?raw";
-import football_svg from "../../../../scoreboard_svgs/football.svg?raw";
 import {
   session_snapshot_schema,
   type ConnectionStatus,
   type SessionSnapshot,
-  type SportId
 } from "../domain/session";
 import { ScoreboardRenderer } from "../scoreboard/ScoreboardRenderer";
+import { sport_svgs } from "../scoreboard/sport_svgs";
 import { get_sport } from "../sports/registry";
 import type { SnapshotSource } from "./snapshot_source";
 import "./viewer.css";
-
-const sport_svgs: Record<SportId, string> = {
-  baseball: baseball_svg,
-  basketball: basketball_svg,
-  football: football_svg
-};
 
 export interface ViewerProps {
   source: SnapshotSource;

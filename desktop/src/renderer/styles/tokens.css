@@ -1,0 +1,18 @@
+:root {
+  --surface-canvas: #0b0e13;
+  --surface-panel: #121720;
+  --surface-raised: #1a202b;
+  --border: #252d39;
+  --border-strong: #3d4858;
+  --text-strong: #f3f6fa;
+  --text-muted: #8e99a8;
+  --accent: #42dc72;
+  --accent-soft: rgba(66, 220, 114, 0.09);
+  --live: #42dc72;
+  --warning: #f4b942;
+  --danger: #ff6666;
+  --focus: rgba(98, 174, 255, 0.55);
+  --radius-md: 11px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 14px 38px rgba(0, 0, 0, 0.16);
+}
