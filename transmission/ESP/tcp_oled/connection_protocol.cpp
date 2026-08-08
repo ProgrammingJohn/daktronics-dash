@@ -15,6 +15,9 @@ namespace {
 
 constexpr char kBase64Alphabet[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+constexpr std::size_t kJsonArenaBytes = 3072;
+constexpr std::size_t kEncodedPayloadBytes =
+    4 * ((kMaxPayloadBytes + 2) / 3) + 1;
 
 template <std::size_t Capacity>
 class FixedAllocator : public ArduinoJson::Allocator {
@@ -32,6 +35,8 @@ class FixedAllocator : public ArduinoJson::Allocator {
   }
 
   void deallocate(void*) override {}
+
+  void reset() { offset_ = 0; }
 
   void* reallocate(void* pointer, std::size_t new_size) override {
     if (pointer == nullptr) {
@@ -58,6 +63,11 @@ class FixedAllocator : public ArduinoJson::Allocator {
   alignas(std::max_align_t) uint8_t storage_[Capacity]{};
   std::size_t offset_{0};
 };
+
+// Protocol work runs exclusively on the Arduino loop task, so one reusable
+// arena avoids placing multi-kilobyte scratch buffers on that task's stack.
+FixedAllocator<kJsonArenaBytes> json_allocator;
+char payload_buffer[kEncodedPayloadBytes]{};
 
 void add_common_fields(JsonDocument& document, const char* message_type,
                        const ProtocolFields& fields) {
@@ -139,16 +149,15 @@ std::size_t encode_snapshot_json(const ProtocolFields& fields,
   if (!fields_valid(fields) || frame.length > kMaxPayloadBytes) {
     return 0;
   }
-  char payload[4 * ((kMaxPayloadBytes + 2) / 3) + 1]{};
-  if (base64_encode(frame.bytes.data(), frame.length, payload,
-                    sizeof(payload)) == 0 && frame.length != 0) {
+  if (base64_encode(frame.bytes.data(), frame.length, payload_buffer,
+                    sizeof(payload_buffer)) == 0 && frame.length != 0) {
     return 0;
   }
 
-  FixedAllocator<kMaxRecordBytes> allocator;
-  JsonDocument document(&allocator);
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
   add_common_fields(document, "SNAPSHOT", fields);
-  document["payload"] = payload;
+  document["payload"] = payload_buffer;
   document["payload_crc32"] = crc32(frame.bytes.data(), frame.length);
   document["details"].to<JsonObject>();
   return serialize_bounded(document, output, capacity);
@@ -159,8 +168,8 @@ std::size_t encode_hello_json(const ProtocolFields& fields, char* output,
   if (!fields_valid(fields)) {
     return 0;
   }
-  FixedAllocator<kMaxRecordBytes> allocator;
-  JsonDocument document(&allocator);
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
   add_common_fields(document, "HELLO", fields);
   document["payload"] = "";
   document["payload_crc32"] = 0;
@@ -174,8 +183,8 @@ std::size_t encode_heartbeat_json(const ProtocolFields& fields,
   if (!fields_valid(fields)) {
     return 0;
   }
-  FixedAllocator<kMaxRecordBytes> allocator;
-  JsonDocument document(&allocator);
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
   add_common_fields(document, "HEARTBEAT", fields);
   document["payload"] = "";
   document["payload_crc32"] = 0;
@@ -194,8 +203,8 @@ bool decode_client_hello(const char* json, std::size_t length,
       length > kMaxRecordBytes) {
     return false;
   }
-  FixedAllocator<kMaxRecordBytes> allocator;
-  JsonDocument document(&allocator);
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
   if (deserializeJson(document, json, length)) {
     return false;
   }

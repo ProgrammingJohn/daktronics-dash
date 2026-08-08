@@ -1,5 +1,6 @@
 import subprocess
 import unittest
+from pathlib import Path
 
 from services.connection.protocol import MessageType, decode_envelope
 
@@ -18,6 +19,22 @@ class FirmwareProtocolTests(unittest.TestCase):
                 "transmission/ESP/tcp_oled/serial_pipeline.cpp",
                 "-o",
                 "/tmp/dakdash_protocol_vector",
+            ],
+            check=True,
+        )
+        stack_report = Path("/tmp/dakdash_connection_protocol.su")
+        stack_report.unlink(missing_ok=True)
+        subprocess.run(
+            [
+                "clang++",
+                "-std=c++17",
+                "-fstack-usage",
+                "-Itransmission/ESP/tcp_oled",
+                "-I/Users/exterkamp/Documents/Arduino/libraries/ArduinoJson/src",
+                "-c",
+                "transmission/ESP/tcp_oled/connection_protocol.cpp",
+                "-o",
+                "/tmp/dakdash_connection_protocol.o",
             ],
             check=True,
         )
@@ -53,6 +70,19 @@ class FirmwareProtocolTests(unittest.TestCase):
             ["/tmp/dakdash_protocol_vector", "decode"], text=True
         )
         self.assertEqual(device_id, "wt32-aabbccddeeff")
+
+    def test_protocol_codec_stack_usage_is_bounded(self):
+        report = Path("/tmp/dakdash_connection_protocol.su").read_text()
+        functions = (
+            "encode_snapshot_json",
+            "encode_hello_json",
+            "encode_heartbeat_json",
+            "decode_client_hello",
+        )
+        for function in functions:
+            line = next(line for line in report.splitlines() if function in line)
+            stack_bytes = int(line.split("\t")[1])
+            self.assertLessEqual(stack_bytes, 1024, function)
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ class ConnectionServer {
   void accept_client(uint32_t now_ms);
   void read_hello(uint32_t now_ms);
   void service_active(uint32_t now_ms, const LatestFrameStore& latest_frame);
-  bool queue_record(const char* json, std::size_t length);
+  bool finish_record(std::size_t body_length);
   bool flush_output();
   bool socket_writable();
   void abandon_client(bool write_failure = false);
@@ -52,7 +52,7 @@ class ConnectionServer {
   uint8_t input_[kMaxRecordBytes + 4]{};
   std::size_t input_length_{0};
   std::size_t expected_record_length_{0};
-  uint8_t output_[kMaxRecordBytes + 4]{};
+  uint8_t output_[kMaxRecordBytes + 5]{};
   std::size_t output_length_{0};
   std::size_t output_offset_{0};
   HealthMetrics metrics_{};

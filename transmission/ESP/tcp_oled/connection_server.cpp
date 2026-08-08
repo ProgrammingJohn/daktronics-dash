@@ -1,7 +1,6 @@
 #include "connection_server.h"
 
 #include <algorithm>
-#include <cstring>
 #include <sys/select.h>
 
 namespace dakdash {
@@ -146,10 +145,11 @@ void ConnectionServer::read_hello(uint32_t now_ms) {
     return;
   }
 
-  char json[kMaxRecordBytes + 1]{};
+  char* json = reinterpret_cast<char*>(output_ + 4);
   ProtocolFields hello_fields = fields(now_ms, 0, now_ms);
-  const std::size_t length = encode_hello_json(hello_fields, json, sizeof(json));
-  if (length == 0 || !queue_record(json, length)) {
+  const std::size_t length =
+      encode_hello_json(hello_fields, json, sizeof(output_) - 4);
+  if (length == 0 || !finish_record(length)) {
     abandon_client(true);
     return;
   }
@@ -162,7 +162,7 @@ void ConnectionServer::service_active(uint32_t now_ms,
   const uint32_t state_seq = latest_frame.state_seq();
   const uint32_t serial_age = state_seq == 0 ? now_ms
                                              : now_ms - latest_frame.received_ms();
-  char json[kMaxRecordBytes + 1]{};
+  char* json = reinterpret_cast<char*>(output_ + 4);
 
   if (state_seq != 0 && state_seq != last_sent_state_seq_) {
     if (state_seq > last_sent_state_seq_ + 1) {
@@ -170,8 +170,8 @@ void ConnectionServer::service_active(uint32_t now_ms,
     }
     ProtocolFields snapshot_fields = fields(now_ms, state_seq, serial_age);
     const std::size_t length = encode_snapshot_json(
-        snapshot_fields, latest_frame.frame(), json, sizeof(json));
-    if (length == 0 || !queue_record(json, length)) {
+        snapshot_fields, latest_frame.frame(), json, sizeof(output_) - 4);
+    if (length == 0 || !finish_record(length)) {
       abandon_client(true);
       return;
     }
@@ -182,8 +182,8 @@ void ConnectionServer::service_active(uint32_t now_ms,
   if (now_ms - last_heartbeat_ms_ >= 1000) {
     ProtocolFields heartbeat_fields = fields(now_ms, state_seq, serial_age);
     const std::size_t length = encode_heartbeat_json(
-        heartbeat_fields, metrics_, json, sizeof(json));
-    if (length == 0 || !queue_record(json, length)) {
+        heartbeat_fields, metrics_, json, sizeof(output_) - 4);
+    if (length == 0 || !finish_record(length)) {
       abandon_client(true);
       return;
     }
@@ -191,16 +191,15 @@ void ConnectionServer::service_active(uint32_t now_ms,
   }
 }
 
-bool ConnectionServer::queue_record(const char* json, std::size_t length) {
-  if (json == nullptr || length > kMaxRecordBytes || output_length_ != 0) {
+bool ConnectionServer::finish_record(std::size_t body_length) {
+  if (body_length > kMaxRecordBytes || output_length_ != 0) {
     return false;
   }
-  output_[0] = static_cast<uint8_t>((length >> 24U) & 0xffU);
-  output_[1] = static_cast<uint8_t>((length >> 16U) & 0xffU);
-  output_[2] = static_cast<uint8_t>((length >> 8U) & 0xffU);
-  output_[3] = static_cast<uint8_t>(length & 0xffU);
-  std::memcpy(output_ + 4, json, length);
-  output_length_ = length + 4;
+  output_[0] = static_cast<uint8_t>((body_length >> 24U) & 0xffU);
+  output_[1] = static_cast<uint8_t>((body_length >> 16U) & 0xffU);
+  output_[2] = static_cast<uint8_t>((body_length >> 8U) & 0xffU);
+  output_[3] = static_cast<uint8_t>(body_length & 0xffU);
+  output_length_ = body_length + 4;
   output_offset_ = 0;
   return true;
 }
