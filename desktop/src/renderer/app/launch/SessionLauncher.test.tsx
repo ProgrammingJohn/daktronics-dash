@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { FakeBackendClient } from "../../api/FakeBackendClient";
 import { SessionProvider } from "../../state/SessionProvider";
@@ -79,5 +79,38 @@ describe("SessionLauncher", () => {
       port: 1234,
       device_id: "wt32-saved"
     });
+  });
+
+  test("starts automatic discovery with a blank IP and one request", async () => {
+    window.localStorage.setItem(
+      "dakdash.connection.v1",
+      JSON.stringify({ ip: "10.0.0.20", port: 1234, device_id: "wt32-943cc63d1287" })
+    );
+    const client = new FakeBackendClient();
+    const launch = vi.spyOn(client, "launch_session");
+    render(
+      <SessionProvider client={client}>
+        <SessionLauncher />
+      </SessionProvider>
+    );
+
+    (await screen.findByRole("radio", { name: /Find device automatically/i })).click();
+    const launch_button = screen.getByRole("button", { name: "Launch session" });
+    fireEvent.click(launch_button);
+    fireEvent.click(launch_button);
+
+    await waitFor(() => expect(launch).toHaveBeenCalledTimes(1));
+    expect(launch).toHaveBeenCalledWith(
+      {
+        sport: "football",
+        source: "synced",
+        connection: {
+          ip: "",
+          port: 1234,
+          device_id: "wt32-943cc63d1287"
+        }
+      },
+      expect.any(AbortSignal)
+    );
   });
 });

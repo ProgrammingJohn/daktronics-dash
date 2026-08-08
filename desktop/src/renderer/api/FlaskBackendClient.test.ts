@@ -63,6 +63,88 @@ describe("FlaskBackendClient", () => {
     });
   });
 
+  test("starts discovery with blank IP and exposes discovery progress", async () => {
+    const discovery = {
+      phase: "BROADCAST_PROBING",
+      active: true,
+      attempts: 2,
+      method: null,
+      requested_host: null,
+      resolved_host: null
+    };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json_response({ message: "Started" }))
+      .mockResolvedValueOnce(
+        json_response({
+          status: "DISCONNECTED",
+          transport: "tcp",
+          source: "daktronics",
+          revision: 0,
+          source_age_ms: null,
+          discovery
+        })
+      );
+    const client = new FlaskBackendClient({ fetcher, storage: null });
+
+    const snapshot = await client.launch_session({
+      sport: "football",
+      source: "synced",
+      connection: { ip: "", port: 1234, device_id: "wt32-943cc63d1287" }
+    });
+
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
+      scoreboard: "football",
+      method: "synced",
+      ip: "",
+      port: 1234,
+      device_id: "wt32-943cc63d1287"
+    });
+    expect(snapshot.connection.discovery).toEqual(discovery);
+  });
+
+  test("retries discovery with exactly one start request per explicit action", async () => {
+    const not_found = {
+      phase: "NOT_FOUND",
+      active: false,
+      attempts: 3,
+      method: null,
+      requested_host: null,
+      resolved_host: null
+    };
+    const probing = { ...not_found, phase: "PASSIVE_LOOKUP", active: true, attempts: 0 };
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json_response({ message: "Started" }))
+      .mockResolvedValueOnce(
+        json_response({
+          status: "DISCONNECTED", transport: "tcp", source: "daktronics",
+          revision: 0, source_age_ms: null, discovery: not_found
+        })
+      )
+      .mockResolvedValueOnce(json_response({ message: "Started" }))
+      .mockResolvedValueOnce(
+        json_response({
+          status: "DISCONNECTED", transport: "tcp", source: "daktronics",
+          revision: 0, source_age_ms: null, discovery: probing
+        })
+      );
+    const client = new FlaskBackendClient({ fetcher, storage: null });
+    await client.launch_session({
+      sport: "football",
+      source: "synced",
+      connection: { ip: "", port: 1234, device_id: "wt32-943cc63d1287" }
+    });
+
+    const retried = await client.retry_sync();
+
+    const start_requests = fetcher.mock.calls.filter(([input]) =>
+      String(input).endsWith("/api/scoreboard-service/start")
+    );
+    expect(start_requests).toHaveLength(2);
+    expect(retried.connection.discovery?.phase).toBe("PASSIVE_LOOKUP");
+  });
+
   test("polls once for multiple subscribers and fetches changed revisions while disconnected", async () => {
     vi.useFakeTimers();
     const fetcher = vi

@@ -5,12 +5,17 @@ const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const RESET_STYLE = `
   :host {
     display: block;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
   }
 
   svg {
     display: block;
     width: 100%;
     height: 100%;
+    max-width: 100%;
+    max-height: 100%;
   }
 
   [hidden] {

@@ -42,6 +42,7 @@ def create_desktop_app(dist_path: Path | None = None) -> Flask:
     def operator_console():
         return send_from_directory(resolved_dist_path, "index.html")
 
+    @app.get("/viewer")
     @app.get("/viewer.html")
     def obs_viewer():
         return send_from_directory(resolved_dist_path, "viewer.html")

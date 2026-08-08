@@ -20,6 +20,7 @@ export interface BackendClient {
   ): void;
   take_manual_control(expected_revision: number, signal?: AbortSignal): Promise<SessionSnapshot>;
   return_to_sync(expected_revision: number, signal?: AbortSignal): Promise<SessionSnapshot>;
+  retry_sync(signal?: AbortSignal): Promise<SessionSnapshot>;
   submit_manual_transition(
     transition: ManualTransition,
     signal?: AbortSignal

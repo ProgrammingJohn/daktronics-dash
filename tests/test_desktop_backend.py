@@ -29,16 +29,20 @@ class DesktopBackendTests(unittest.TestCase):
         client = create_desktop_app(self.dist_path).test_client()
 
         operator_response = client.get("/")
+        viewer_route_response = client.get("/viewer")
         viewer_response = client.get("/viewer.html")
         asset_response = client.get("/assets/operator.js")
 
         self.assertEqual(operator_response.status_code, 200)
         self.assertIn(b'DakDash operator', operator_response.data)
+        self.assertEqual(viewer_route_response.status_code, 200)
+        self.assertIn(b'DakDash viewer', viewer_route_response.data)
         self.assertEqual(viewer_response.status_code, 200)
         self.assertIn(b'DakDash viewer', viewer_response.data)
         self.assertEqual(asset_response.status_code, 200)
         self.assertEqual(asset_response.data, b"window.dakdash = true;")
         operator_response.close()
+        viewer_route_response.close()
         viewer_response.close()
         asset_response.close()
 

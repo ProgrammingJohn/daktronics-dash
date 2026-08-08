@@ -3,6 +3,22 @@ import { z } from "zod";
 export const sport_id_schema = z.enum(["baseball", "basketball", "football"]);
 export const transmission_source_schema = z.enum(["manual", "synced"]);
 export const connection_status_schema = z.enum(["live", "stale", "disconnected"]);
+export const discovery_phase_schema = z.enum([
+  "IDLE",
+  "DIRECT_CONNECT",
+  "PASSIVE_LOOKUP",
+  "BROADCAST_PROBING",
+  "FOUND",
+  "NOT_FOUND"
+]);
+export const discovery_status_schema = z.object({
+  phase: discovery_phase_schema,
+  active: z.boolean(),
+  attempts: z.number().int().nonnegative(),
+  method: z.string().nullable(),
+  requested_host: z.string().nullable(),
+  resolved_host: z.string().nullable()
+});
 
 export const session_snapshot_schema = z.object({
   session: z.object({
@@ -18,7 +34,8 @@ export const session_snapshot_schema = z.object({
     source_age_ms: z.number().nonnegative().nullable(),
     message: z.string().nullable(),
     transport: z.string().optional(),
-    source: z.string().optional()
+    source: z.string().optional(),
+    discovery: discovery_status_schema.optional()
   }),
   scoreboard: z.object({
     revision: z.number().int().nonnegative(),
@@ -29,6 +46,8 @@ export const session_snapshot_schema = z.object({
 export type SportId = z.infer<typeof sport_id_schema>;
 export type TransmissionSource = z.infer<typeof transmission_source_schema>;
 export type ConnectionStatus = z.infer<typeof connection_status_schema>;
+export type DiscoveryPhase = z.infer<typeof discovery_phase_schema>;
+export type DiscoveryStatus = z.infer<typeof discovery_status_schema>;
 export type SessionSnapshot = z.infer<typeof session_snapshot_schema>;
 
 export interface SessionCapabilities {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  discovery_status_schema,
   session_snapshot_schema,
   type AppearancePayload,
   type ConnectionStatus,
@@ -27,7 +28,8 @@ const backend_status_schema = z.object({
   transport: z.string(),
   source: z.string(),
   revision: z.number().int().nonnegative(),
-  source_age_ms: z.number().nonnegative().nullable()
+  source_age_ms: z.number().nonnegative().nullable(),
+  discovery: discovery_status_schema.optional()
 });
 
 type BackendStatus = z.infer<typeof backend_status_schema>;
@@ -265,6 +267,22 @@ export class FlaskBackendClient implements BackendClient {
     return structuredClone(this.require_active());
   }
 
+  async retry_sync(signal?: AbortSignal): Promise<SessionSnapshot> {
+    const current = this.require_active();
+    if (current.session.source !== "synced" || this.connection === null) {
+      throw new Error("Synced connection settings are unavailable");
+    }
+    await this.request("/api/scoreboard-service/start", {
+      method: "POST",
+      signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scoreboard: current.session.sport, method: "synced", ...this.connection })
+    });
+    await this.refresh(signal);
+    this.persist();
+    return structuredClone(this.require_active());
+  }
+
   async submit_manual_transition(transition: ManualTransition, signal?: AbortSignal): Promise<SessionSnapshot> {
     const current = this.require_revision(transition.expected_revision);
     if (transition.session_id !== current.session.session_id) throw new Error("Session conflict");
@@ -384,7 +402,8 @@ export class FlaskBackendClient implements BackendClient {
         source_age_ms: status.source_age_ms,
         message: status_message(status.status),
         transport: status.transport,
-        source: status.source
+        source: status.source,
+        discovery: status.discovery ?? snapshot.connection.discovery
       }
     };
   }

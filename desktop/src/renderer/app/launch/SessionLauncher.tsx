@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import type { SportId, TransmissionSource } from "../../domain/session";
 import { use_session } from "../../state/SessionProvider";
 import {
   default_connection,
   load_connection,
-  save_connection
+  load_connection_method,
+  save_connection,
+  save_connection_method
 } from "./connection_preferences";
 import styles from "./SessionLauncher.module.css";
 
@@ -30,7 +32,17 @@ export function SessionLauncher() {
       return default_connection;
     }
   });
+  const [connection_method, set_connection_method] = useState(() => {
+    try {
+      const saved_connection = load_connection(window.localStorage);
+      return load_connection_method(window.localStorage, saved_connection);
+    } catch {
+      return "direct" as const;
+    }
+  });
   const [error, set_error] = useState<string | null>(null);
+  const [submitting, set_submitting] = useState(false);
+  const submitting_ref = useRef(false);
   const selected_capability = useMemo(
     () => capabilities.find((entry) => entry.sport === sport),
     [capabilities, sport]
@@ -47,10 +59,16 @@ export function SessionLauncher() {
 
   const submit = (event: FormEvent): void => {
     event.preventDefault();
+    if (submitting_ref.current) return;
     set_error(null);
+    let launch_connection = connection;
     if (source === "synced") {
-      if (!connection.ip.trim() || !connection.device_id.trim()) {
-        set_error("IP address and Device ID are required");
+      if (!connection.device_id.trim()) {
+        set_error("Device ID is required");
+        return;
+      }
+      if (connection_method === "direct" && !connection.ip.trim()) {
+        set_error("IP address is required for a direct connection");
         return;
       }
       if (connection.port < 1 || connection.port > 65535) {
@@ -59,13 +77,26 @@ export function SessionLauncher() {
       }
       try {
         save_connection(window.localStorage, connection);
+        save_connection_method(window.localStorage, connection_method);
       } catch {
         // Connection can still launch when browser storage is unavailable.
       }
+      launch_connection = {
+        ...connection,
+        ip: connection_method === "automatic" ? "" : connection.ip.trim(),
+        device_id: connection.device_id.trim()
+      };
     }
-    void launch({ sport, source, ...(source === "synced" ? { connection } : {}) }).catch((reason: unknown) => {
-      set_error(reason instanceof Error ? reason.message : "Unable to launch session");
-    });
+    submitting_ref.current = true;
+    set_submitting(true);
+    void launch({ sport, source, ...(source === "synced" ? { connection: launch_connection } : {}) })
+      .catch((reason: unknown) => {
+        set_error(reason instanceof Error ? reason.message : "Unable to launch session");
+      })
+      .finally(() => {
+        submitting_ref.current = false;
+        set_submitting(false);
+      });
   };
 
   return (
@@ -128,18 +159,40 @@ export function SessionLauncher() {
         {source === "synced" && (
           <fieldset className={styles.fieldset}>
             <legend>TCP connection</legend>
-            <div className={styles.connectionGrid}>
-              <label>
-                IP address
+            <div className={styles.connectionMethodGrid}>
+              <label className={styles.connectionMethod}>
                 <input
-                  aria-label="IP address"
-                  required
-                  value={connection.ip}
-                  onChange={(event) =>
-                    set_connection((current) => ({ ...current, ip: event.target.value }))
-                  }
+                  type="radio"
+                  name="connection-method"
+                  checked={connection_method === "automatic"}
+                  onChange={() => set_connection_method("automatic")}
                 />
+                <span><strong>Find device automatically</strong>Use bounded local discovery.</span>
               </label>
+              <label className={styles.connectionMethod}>
+                <input
+                  type="radio"
+                  name="connection-method"
+                  checked={connection_method === "direct"}
+                  onChange={() => set_connection_method("direct")}
+                />
+                <span><strong>Enter IP manually</strong>Connect directly to a known address.</span>
+              </label>
+            </div>
+            <div className={styles.connectionGrid}>
+              {connection_method === "direct" && (
+                <label>
+                  IP address
+                  <input
+                    aria-label="IP address"
+                    required
+                    value={connection.ip}
+                    onChange={(event) =>
+                      set_connection((current) => ({ ...current, ip: event.target.value }))
+                    }
+                  />
+                </label>
+              )}
               <label>
                 Port
                 <input
@@ -173,9 +226,9 @@ export function SessionLauncher() {
         <button
           className={styles.launchButton}
           type="submit"
-          disabled={selected_capability === undefined}
+          disabled={selected_capability === undefined || submitting}
         >
-          Launch session
+          {submitting ? "Launching…" : "Launch session"}
         </button>
       </form>
     </main>

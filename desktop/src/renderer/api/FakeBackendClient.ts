@@ -236,6 +236,15 @@ export class FakeBackendClient implements BackendClient {
     return clone(this.active_snapshot);
   }
 
+  async retry_sync(signal?: AbortSignal): Promise<SessionSnapshot> {
+    signal?.throwIfAborted();
+    const current = this.require_active();
+    if (current.session.source !== "synced") {
+      throw new Error("Synced connection settings are unavailable");
+    }
+    return clone(current);
+  }
+
   async submit_manual_transition(
     transition: ManualTransition,
     signal?: AbortSignal

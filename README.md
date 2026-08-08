@@ -28,7 +28,7 @@ The Electron application runs the React operator console and the Flask API as
 one local application. It keeps the OBS viewer available at:
 
 ```text
-http://127.0.0.1:58321/viewer.html
+http://127.0.0.1:58321/viewer
 ```
 
 Run an unpackaged development build with:

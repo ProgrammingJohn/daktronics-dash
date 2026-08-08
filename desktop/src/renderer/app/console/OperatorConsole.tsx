@@ -5,6 +5,7 @@ import { use_session } from "../../state/SessionProvider";
 import { get_sport } from "../../sports/registry";
 import { ManualControlDeck } from "../manual/ManualControlDeck";
 import { AppearanceEditor } from "../appearance/AppearanceEditor";
+import { save_connection_method } from "../launch/connection_preferences";
 import { ConnectionBadge } from "./ConnectionBadge";
 import { ProgramPreview } from "./ProgramPreview";
 import styles from "./OperatorConsole.module.css";
@@ -13,6 +14,8 @@ export function OperatorConsole() {
   const session = use_session();
   const [appearance_open, set_appearance_open] = useState(false);
   const [appearance, set_appearance] = useState<AppearancePayload | undefined>();
+  const [retrying, set_retrying] = useState(false);
+  const [discovery_error, set_discovery_error] = useState<string | null>(null);
   const snapshot = select_display_snapshot(session.state);
   const active_sport = snapshot?.session.sport;
 
@@ -35,6 +38,20 @@ export function OperatorConsole() {
   const daktronics_authority = snapshot.session.control_authority === "daktronics";
   const source_label = synced ? "Daktronics Sync" : "Manual Control";
   const age = snapshot.connection.source_age_ms;
+  const discovery = snapshot.connection.discovery;
+
+  const discovery_message = (() => {
+    if (discovery === undefined) return null;
+    if (discovery.phase === "DIRECT_CONNECT") return "Connecting to the saved device…";
+    if (discovery.phase === "PASSIVE_LOOKUP") return "Checking for the device locally…";
+    if (discovery.phase === "BROADCAST_PROBING") {
+      return `Searching the local network… attempt ${discovery.attempts} of 3.`;
+    }
+    if (discovery.phase === "FOUND") {
+      return `Device found at ${discovery.resolved_host ?? "the resolved address"}.`;
+    }
+    return null;
+  })();
 
   const take_over = (): void => {
     if (window.confirm("Take manual control? The last live score will be copied into manual controls.")) {
@@ -46,6 +63,26 @@ export function OperatorConsole() {
     if (window.confirm("End this session and return to sport selection?")) {
       void session.launch_new_session();
     }
+  };
+
+  const retry_discovery = (): void => {
+    if (retrying) return;
+    set_retrying(true);
+    set_discovery_error(null);
+    void session.retry_sync()
+      .catch((reason: unknown) => {
+        set_discovery_error(reason instanceof Error ? reason.message : "Unable to retry discovery");
+      })
+      .finally(() => set_retrying(false));
+  };
+
+  const enter_ip_manually = (): void => {
+    try {
+      save_connection_method(window.localStorage, "direct");
+    } catch {
+      // The launcher can still open if local storage is unavailable.
+    }
+    void session.launch_new_session();
   };
 
   return (
@@ -76,6 +113,32 @@ export function OperatorConsole() {
         </div>
 
         <aside className={styles.sidebar}>
+          {synced && discovery !== undefined && discovery.phase !== "IDLE" && (
+            <section className={styles.panel} aria-label="Device discovery">
+              <span className={styles.sectionLabel}>Device discovery</span>
+              <h2>{discovery.phase === "NOT_FOUND" ? "Device not found" : "Finding scoreboard"}</h2>
+              {discovery_message !== null && <p>{discovery_message}</p>}
+              <dl className={styles.discoveryDetails}>
+                <div><dt>Phase</dt><dd>{discovery.phase}</dd></div>
+                <div><dt>Attempts</dt><dd>{discovery.attempts}</dd></div>
+                <div><dt>Method</dt><dd>{discovery.method ?? "—"}</dd></div>
+                <div><dt>Resolved host</dt><dd>{discovery.resolved_host ?? "—"}</dd></div>
+              </dl>
+              {discovery.phase !== "FOUND" && discovery.phase !== "DIRECT_CONNECT" && (
+                <div className={styles.discoveryActions}>
+                  {discovery.phase === "NOT_FOUND" && (
+                    <button className={styles.primaryButton} disabled={retrying} onClick={retry_discovery}>
+                      {retrying ? "Retrying…" : "Retry discovery"}
+                    </button>
+                  )}
+                  <button className={styles.secondaryButton} onClick={enter_ip_manually}>
+                    Enter IP manually
+                  </button>
+                </div>
+              )}
+              {discovery_error !== null && <p className={styles.inlineError}>{discovery_error}</p>}
+            </section>
+          )}
           <section className={styles.panel}>
             <span className={styles.sectionLabel}>Control authority</span>
             <h2>{daktronics_authority ? "Monitoring Daktronics" : "Manual control active"}</h2>

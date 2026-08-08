@@ -31,6 +31,7 @@ interface SessionContextValue {
   launch_new_session(): Promise<void>;
   take_manual_control(): Promise<void>;
   return_to_sync(): Promise<void>;
+  retry_sync(): Promise<void>;
   transition(fields: Record<string, unknown>): Promise<void>;
   undo(): Promise<void>;
   load_appearance(sport: SportId): Promise<AppearancePayload>;
@@ -175,6 +176,16 @@ export function SessionProvider({ client, children }: SessionProviderProps) {
     dispatch({ type: "snapshot", generation, snapshot });
   }, [client]);
 
+  const retry_sync = useCallback(async (): Promise<void> => {
+    const current = state_ref.current.accepted;
+    if (current === null) throw new Error("No active session");
+    const generation = state_ref.current.generation;
+    const snapshot = session_snapshot_schema.parse(
+      await client.retry_sync(active_controller_ref.current?.signal)
+    );
+    dispatch({ type: "snapshot", generation, snapshot });
+  }, [client]);
+
   const transition = useCallback(
     async (fields: Record<string, unknown>): Promise<void> => {
       const current = state_ref.current.accepted;
@@ -237,6 +248,7 @@ export function SessionProvider({ client, children }: SessionProviderProps) {
     launch_new_session,
     take_manual_control,
     return_to_sync,
+    retry_sync,
     transition,
     undo,
     load_appearance,
