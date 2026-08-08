@@ -9,9 +9,9 @@
   <style>
     @font-face {
       font-family: Lemonmilk;
-      src: url(/static/fonts/LEMONMILK-Medium.otf);
+      src: url(/fonts/LEMONMILK-Medium.otf);
     }
-    :root {
+    svg {
       --away_team_text: #004285;
       --home_team_text: #ffffff;
       --away_team_light: #dcdcdc;
