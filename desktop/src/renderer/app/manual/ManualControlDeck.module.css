@@ -1,0 +1,27 @@
+.deck { margin-top: 18px; }
+.deckHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.deckHeader span { color: var(--text-muted); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.deckHeader h2 { margin: 3px 0 0; font-size: 17px; }
+.deckHeader button,
+.returnButton,
+.action { padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-raised); color: var(--text-strong); font: inherit; font-size: 12px; cursor: pointer; }
+.deckHeader button:disabled { opacity: .4; cursor: default; }
+.controls { display: grid; gap: 9px; margin-top: 14px; }
+.controlField,
+.toggle,
+.clockField { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #242528; }
+.controlLabel { color: var(--text-muted); font-size: 12px; }
+.counter { display: grid; grid-template-columns: 32px 40px 32px; align-items: center; text-align: center; }
+.counter button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-raised); color: var(--text-strong); cursor: pointer; }
+.counter output { font-weight: 800; }
+.toggle { width: 100%; color: var(--text-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.toggle strong { color: var(--text-strong); }
+.toggle[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.clockField { align-items: flex-start; flex-direction: column; }
+.clockInputs { display: flex; width: 100%; align-items: flex-end; gap: 7px; }
+.clockInputs label { display: grid; gap: 4px; color: var(--text-muted); font-size: 9px; text-transform: uppercase; }
+.clockInputs input { width: 58px; padding: 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-raised); color: var(--text-strong); }
+.clockInputs button { padding: 9px 10px; border: 1px solid var(--border-strong); border-radius: 3px; background: var(--surface-raised); color: var(--text-strong); font-weight: 700; cursor: pointer; }
+.clockInputs button:first-of-type { margin-left: auto; }
+.returnButton { width: 100%; margin-top: 12px; }
+.error { color: var(--danger); font-size: 11px; }

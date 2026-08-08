@@ -4,13 +4,10 @@
   viewBox="0 0 1485 127"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
+  data-appearance-field="scoreboard_root"
 >
   <style>
-    @font-face {
-      font-family: Lemonmilk;
-      src: url(/static/fonts/LEMONMILK-Medium.otf);
-    }
-    :root {
+    svg {
       --away_team_text: #004285;
       --home_team_text: #ffffff;
       --away_team_light: #dcdcdc;
@@ -19,8 +16,8 @@
       --home_team_dark: #004285;
     }
     svg {
-      font-family: Lemonmilk;
-      font-weight: lighter;
+      font-family: "DakDash Scoreboard", Arial, sans-serif;
+      font-weight: 500;
     }
 
     #HomeTimeoutIndicator,
@@ -32,6 +29,12 @@
     #AwayTimeoutIndicator.hide {
       transform: translateY(5%);
     }
+    [data-score-field="possession"][data-possession="home"] {
+      fill: url(#homeDownGradient);
+    }
+    [data-score-field="possession"][data-possession="away"] {
+      fill: url(#awayDownGradient);
+    }
   </style>
   <g id="football 1">
     <g id="Football Scoreboard">
@@ -41,29 +44,6 @@
         fill="#474747"
       />
       <g id="AwayRegion">
-        <!--
-        <g id="AwayTimeoutIndicator">
-          <path
-            id="Vector"
-            d="M461 15C461 6.716 467.716 0 476 0H778C786.28 0 793 6.716 793 15V40H461V15Z"
-            fill="url(#paint0_linear_1_2)"
-          />
-          <text
-            id="TIMEOUT"
-            fill="var(--away_team_text)"
-            xml:space="preserve"
-            style="white-space: normal"
-            font-size="30"
-            font-weight="bold"
-            letter-spacing="0em"
-            text-anchor="middle"
-            x="630"
-            y="30.9091"
-          >
-            TIMEOUT
-          </text>
-        </g> 
-        -->
         <path
           id="AwayLight"
           d="M461 38.579H778C786.28 38.579 793 45.295 793 53.579V112C793 120.28 786.28 127 778 127H461V38.579Z"
@@ -78,13 +58,15 @@
         </g>
         <text
           id="away_team_name"
+          data-score-field="away_team_name"
+          data-appearance-field="away_team_name"
           fill="var(--away_team_text)"
           x="475"
           y="98"
           xml:space="preserve"
           style="white-space: normal"
           font-size="50"
-          font-weight="light"
+          font-weight="300"
           letter-spacing="0.05em"
           text-anchor="left"
         >
@@ -92,11 +74,12 @@
         </text>
         <text
           id="away_score"
+          data-score-field="away_score"
           fill="var(--away_team_text)"
           xml:space="preserve"
           style="white-space: normal"
           font-size="58"
-          font-weight="bold"
+          font-weight="700"
           letter-spacing="0em"
           text-anchor="middle"
           x="735"
@@ -107,45 +90,25 @@
         <g id="AwayTimeouts">
           <path
             id="away_timeouts_t3"
+            data-score-field="away_timeout_3"
             d="M593.418 114.5H646.256V120.75H593.418V114.5Z"
             fill="var(--away_team_text)"
           />
           <path
             id="away_timeouts_t2"
+            data-score-field="away_timeout_2"
             d="M534.709 114.5H587.547V120.75H534.709V114.5Z"
             fill="var(--away_team_text)"
           />
           <path
             id="away_timeouts_t1"
+            data-score-field="away_timeout_1"
             d="M476 114.5H528.838V120.75H476V114.5Z"
             fill="var(--away_team_text)"
           />
         </g>
       </g>
       <g id="HomeRegion">
-        <!--
-        <g id="HomeTimeoutIndicator">
-          <path
-            id="Vector_3"
-            d="M129 15C129 6.716 135.716 0 144 0H446C454.284 0 461 6.716 461 15V40H129V15Z"
-            fill="url(#paint2_linear_1_2)"
-          />
-          <text
-            id="TIMEOUT_2"
-            fill="var(--home_team_text)"
-            xml:space="preserve"
-            style="white-space: normal"
-            font-size="30"
-            font-weight="bold"
-            letter-spacing="0em"
-            text-anchor="middle"
-            x="298.171"
-            y="30.9091"
-          >
-            timeout
-          </text>
-        </g>
-        -->
         <path
           id="HomeLight"
           d="M129 53.579C129 45.295 135.716 38.579 144 38.579H461V127H144C135.716 127 129 120.28 129 112V53.579Z"
@@ -160,13 +123,15 @@
         </g>
         <text
           id="home_team_name"
+          data-score-field="home_team_name"
+          data-appearance-field="home_team_name"
           fill="var(--home_team_text)"
           x="145"
           y="98"
           xml:space="preserve"
           style="white-space: normal"
           font-size="50"
-          font-weight="light"
+          font-weight="300"
           letter-spacing="0.05em"
           text-anchor="left"
         >
@@ -174,11 +139,12 @@
         </text>
         <text
           id="home_score"
+          data-score-field="home_score"
           fill="var(--home_team_text)"
           xml:space="preserve"
           style="white-space: normal"
           font-size="58"
-          font-weight="bold"
+          font-weight="700"
           letter-spacing="0em"
           text-anchor="middle"
           x="402"
@@ -189,16 +155,19 @@
         <g id="HomeTimeouts">
           <path
             id="home_timeouts_t3"
+            data-score-field="home_timeout_3"
             d="M262.241 114.5H315V120.75H262.241V114.5Z"
             fill="var(--home_team_text)"
           />
           <path
             id="home_timeouts_t2"
+            data-score-field="home_timeout_2"
             d="M203.621 114.5H256.379V120.75H203.621V114.5Z"
             fill="var(--home_team_text)"
           />
           <path
             id="home_timeouts_t1"
+            data-score-field="home_timeout_1"
             d="M145 114.5H197.759V120.75H145V114.5Z"
             fill="var(--home_team_text)"
           />
@@ -213,13 +182,14 @@
         />
         <text
           id="clock"
+          data-score-field="clock"
           fill="white"
           x="1065"
           y="102"
           xml:space="preserve"
           style="white-space: normal"
           font-size="50"
-          font-weight="bold"
+          font-weight="700"
           letter-spacing="0em"
           text-anchor="middle"
         >
@@ -227,11 +197,12 @@
         </text>
         <text
           id="period"
+          data-score-field="period"
           fill="white"
           xml:space="preserve"
           style="white-space: normal"
           font-size="50"
-          font-weight="light"
+          font-weight="300"
           letter-spacing="0em"
           text-anchor="middle"
           x="883"
@@ -243,16 +214,18 @@
       <g id="DownGroup">
         <path
           id="DownRegion"
+          data-score-field="possession"
+          data-possession="home"
           d="M1157 38H1470C1478.28 38 1485 44.716 1485 53V112C1485 120.28 1478.28 127 1470 127H1157V38Z"
-          fill="url(#homeDownGradient)"
         />
         <text
           id="down_text"
+          data-score-field="down_text"
           fill="white"
           xml:space="preserve"
           style="white-space: normal"
           font-size="50"
-          font-weight="light"
+          font-weight="300"
           letter-spacing="0em"
           x="1320"
           y="101.322"

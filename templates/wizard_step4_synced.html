@@ -1,3 +1,8 @@
 <h2>Live Scoreboard</h2>
 <div class="svg-score" id="svg-preview-score"></div>
-<p>Status: <span id="status_text">starting...</span></p>
+<dl class="connection-status">
+  <div><dt>Connection</dt><dd id="status_text">STARTING</dd></div>
+  <div><dt>Transport</dt><dd id="transport_text">tcp</dd></div>
+  <div><dt>Source age</dt><dd id="source_age_text">—</dd></div>
+</dl>
+<p id="connection_error" role="alert" hidden></p>

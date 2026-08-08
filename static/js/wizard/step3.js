@@ -1,5 +1,15 @@
 import { StateHandler } from "../state.js";
 
+const CONNECTION_STORAGE_KEY = "dakdash.connection.v1";
+
+function loadConnectionPreferences() {
+  try {
+    return JSON.parse(localStorage.getItem(CONNECTION_STORAGE_KEY)) ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export const initStep3 = () => {
   $(".wizard-step").hide();
   $("#wizard_step3").show();
@@ -14,7 +24,12 @@ export const initStep3 = () => {
     ? $("#manual_settings").show()
     : $("#manual_settings").hide();
 
-  $("#start_server_button").click(function () {
+  const saved = loadConnectionPreferences();
+  $("#ip_address").val(saved.ip ?? "");
+  $("#port").val(saved.port ?? 1234);
+  $("#device_id").val(saved.device_id ?? "");
+
+  $("#start_server_button").off("click.dakdash").on("click.dakdash", function () {
     const selectedMethod = $('input[name="method_selector"]:checked').val();
     if (selectedMethod) {
       if (selectedMethod === "manual") {
@@ -24,18 +39,29 @@ export const initStep3 = () => {
         StateHandler.setState("broadcastMethod", "synced");
         StateHandler.setState("ipAddress", $("#ip_address").val());
         StateHandler.setState("port", $("#port").val());
+        StateHandler.setState("deviceId", $("#device_id").val());
+        localStorage.setItem(
+          CONNECTION_STORAGE_KEY,
+          JSON.stringify({
+            ip: $("#ip_address").val(),
+            port: Number($("#port").val()),
+            device_id: $("#device_id").val(),
+          })
+        );
         StateHandler.setState("currentStep", 5);
       }
     } else {
       alert("Please select a communication method.");
     }
   });
-  $("#manual").click(function () {
+  $("#manual").off("click.dakdash").on("click.dakdash", function () {
     $("#port").attr("disabled", "disabled");
     $("#ip_address").attr("disabled", "disabled");
+    $("#device_id").attr("disabled", "disabled");
   });
-  $("#synced").click(function () {
+  $("#synced").off("click.dakdash").on("click.dakdash", function () {
     $("#port").removeAttr("disabled");
     $("#ip_address").removeAttr("disabled");
+    $("#device_id").removeAttr("disabled");
   });
 };

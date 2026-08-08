@@ -93,7 +93,8 @@ export async function startService(
   scoreboard,
   communication_method,
   ip = "",
-  port = ""
+  port = "",
+  deviceId = ""
 ) {
   return new Promise((resolve, reject) => {
     $.ajax({
@@ -106,13 +107,18 @@ export async function startService(
         method: communication_method,
         ip: ip,
         port: port,
+        device_id: deviceId,
       }),
       success: function (data) {
         resolve(data);
       },
       error: function (jqXHR, textStatus, errorThrown) {
         console.error("Failed to start service:", textStatus, errorThrown);
-        reject(new Error(`Error starting service: ${textStatus}`));
+        const message =
+          jqXHR.responseJSON?.error ??
+          jqXHR.responseJSON?.message ??
+          `Error starting service: ${textStatus}`;
+        reject(new Error(message));
       },
     });
   });

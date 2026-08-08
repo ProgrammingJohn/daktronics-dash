@@ -6,3 +6,5 @@ rtd-reference.pdf
 env
 electron
 .worktrees/
+/.build/
+/release/
