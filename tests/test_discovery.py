@@ -169,6 +169,21 @@ class DiscoveryTests(unittest.TestCase):
         ))
         self.assertEqual(sock.sent, [])
 
+    def test_broadcast_socket_failure_returns_not_found(self):
+        phases = []
+        client = DiscoveryClient(
+            arp_resolver=NullArpResolver(),
+            socket_factory=lambda *args: (_ for _ in ()).throw(
+                OSError("broadcast blocked")
+            ),
+        )
+        result = client.discover(
+            "wt32-943cc63d1287",
+            progress=lambda *values: phases.append(values),
+        )
+        self.assertIsNone(result)
+        self.assertEqual(phases[-1][0], "NOT_FOUND")
+
 
 if __name__ == "__main__":
     unittest.main()

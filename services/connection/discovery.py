@@ -114,8 +114,13 @@ class DiscoveryClient:
             0,
         ).with_details({"nonce": nonce})
         datagram = encode_datagram(request)
-        sock = self._socket_factory(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            sock = self._socket_factory(socket.AF_INET, socket.SOCK_DGRAM)
+        except OSError:
+            _report(progress, "NOT_FOUND", 0, None, None)
+            return None
         started = self._monotonic()
+        attempt = 0
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             for attempt in range(1, self._attempts + 1):
@@ -145,6 +150,9 @@ class DiscoveryClient:
                         )
                         return result
             _report(progress, "NOT_FOUND", self._attempts, None, None)
+            return None
+        except OSError:
+            _report(progress, "NOT_FOUND", attempt, None, None)
             return None
         finally:
             sock.close()

@@ -65,6 +65,8 @@ class ConnectionSupervisor(threading.Thread):
         session_packet_seq = None
         session_state_seq = None
         target_host = self._host or None
+        target_method = "saved_ip" if target_host is not None else None
+        failed_hosts = set()
         discovery_available = True
         if target_host is not None:
             self._record_discovery("DIRECT_CONNECT", 0, None, None)
@@ -79,6 +81,8 @@ class ConnectionSupervisor(threading.Thread):
                 self._stop_event.wait()
                 return
             target_host = result.host
+            target_method = result.method
+            discovery_available = result.method == "arp_cache"
         while not self._stop_event.is_set():
             transport = None
             generation = None
@@ -93,11 +97,11 @@ class ConnectionSupervisor(threading.Thread):
                     break
                 hello = transport.handshake(timeout_s=2.0)
                 self._validate_hello(hello)
-                if discovery_available:
-                    discovery_available = False
-                    self._record_discovery(
-                        "FOUND", 0, "saved_ip", target_host
-                    )
+                discovery_available = False
+                attempts = self.discovery_status()["attempts"]
+                self._record_discovery(
+                    "FOUND", attempts, target_method, target_host
+                )
                 if hello.session_id == current_session_id:
                     if (session_packet_seq is not None and
                             hello.packet_seq <= session_packet_seq):
@@ -171,10 +175,13 @@ class ConnectionSupervisor(threading.Thread):
                 self._clear_transport(transport)
 
             if should_discover and not self._stop_event.is_set():
+                failed_hosts.add(target_host)
                 discovery_available = False
-                result = self._discover_once({target_host})
+                result = self._discover_once(failed_hosts)
                 if result is not None:
                     target_host = result.host
+                    target_method = result.method
+                    discovery_available = result.method == "arp_cache"
                     backoff_index = 0
                     continue
 
@@ -204,6 +211,11 @@ class ConnectionSupervisor(threading.Thread):
                 self._discovery["method"] = method
             if host is not None:
                 self._discovery["resolved_host"] = host
+            if phase in {
+                    "DIRECT_CONNECT", "PASSIVE_LOOKUP",
+                    "BROADCAST_PROBING", "NOT_FOUND"}:
+                self._discovery["method"] = None
+                self._discovery["resolved_host"] = None
 
     def stop(self, timeout_s=2.0):
         self._stop_event.set()

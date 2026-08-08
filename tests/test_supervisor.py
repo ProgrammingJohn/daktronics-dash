@@ -119,6 +119,19 @@ class FakeDiscoveryClient:
         return self.result
 
 
+class SequenceDiscoveryClient(FakeDiscoveryClient):
+    def __init__(self, results):
+        super().__init__()
+        self.results = list(results)
+
+    def discover(self, device_id, excluded_hosts=(), stop_event=None,
+                 progress=None):
+        self.result = self.results.pop(0)
+        return super().discover(
+            device_id, excluded_hosts, stop_event, progress
+        )
+
+
 class SupervisorTests(unittest.TestCase):
     def test_direct_address_is_tried_without_discovery(self):
         transport = BlockingFakeTransport()
@@ -220,6 +233,44 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(len(discovery.calls), 1)
         self.assertEqual(diagnostics["phase"], "NOT_FOUND")
         self.assertEqual(diagnostics["attempts"], 3)
+
+    def test_stale_arp_candidate_falls_through_to_one_udp_window(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = SequenceDiscoveryClient([
+            DiscoveryResult(
+                "10.93.37.137", 1234, "wt32-aabbccddeeff", "arp_cache"
+            ),
+            DiscoveryResult(
+                "10.93.37.138", 1234, "wt32-aabbccddeeff", "udp_broadcast"
+            ),
+        ])
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            if host != "10.93.37.138":
+                raise OSError("unreachable")
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(
+            hosts[:3], ["10.93.37.99", "10.93.37.137", "10.93.37.138"]
+        )
+        self.assertEqual(len(discovery.calls), 2)
+        self.assertEqual(discovery.calls[1][1], {
+            "10.93.37.99", "10.93.37.137"
+        })
+        self.assertEqual(diagnostics["method"], "udp_broadcast")
+        self.assertEqual(diagnostics["resolved_host"], "10.93.37.138")
 
     def test_stop_closes_transport_and_joins_promptly(self):
         transport = BlockingFakeTransport()

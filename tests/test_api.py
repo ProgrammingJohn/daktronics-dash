@@ -70,6 +70,19 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["error"], "Device ID is required")
 
+    def test_synced_start_rejects_invalid_device_identity(self):
+        response = self.client.post(
+            "/api/scoreboard-service/start",
+            json={
+                "scoreboard": "football",
+                "method": "synced",
+                "port": 1234,
+                "device_id": "not-a-wt32-device",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.get_json()["error"], "Valid device ID is required")
+
     @mock.patch.object(runtime, "start_synced", return_value=True)
     def test_synced_start_without_ip_uses_discovery(self, start_synced):
         response = self.client.post(

@@ -4,6 +4,7 @@ from flask import Blueprint, render_template, request, jsonify
 from services.service_service import scoreboards, load_scoreboard, update_scoreboard_preferences, scoreboard_modes
 from services.utils import get_scoreboard_preferences
 from services.runtime import runtime
+from services.connection.discovery import device_id_to_mac
 
 api_bp = Blueprint('api', __name__)
 
@@ -69,6 +70,10 @@ def start_service():
             return jsonify({'error': 'Valid port is required'}), 400
         if not device_id:
             return jsonify({'error': 'Device ID is required'}), 400
+        try:
+            device_id_to_mac(device_id)
+        except ValueError:
+            return jsonify({'error': 'Valid device ID is required'}), 400
         if not runtime.start_synced(scoreboard_name, ip, port, device_id):
             return jsonify({'error': 'Previous scoreboard service did not stop'}), 503
     else:
