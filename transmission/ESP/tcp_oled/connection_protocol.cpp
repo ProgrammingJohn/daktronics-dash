@@ -257,8 +257,7 @@ bool decode_discover_json(const char* json, std::size_t length,
   if (message_type == nullptr ||
       std::strcmp(message_type, "DISCOVER") != 0 ||
       requested_device == nullptr ||
-      (requested_device[0] != '\0' &&
-       std::strcmp(requested_device, local_device_id) != 0) ||
+      std::strcmp(requested_device, local_device_id) != 0 ||
       !valid_nonce(requested_nonce)) {
     return false;
   }

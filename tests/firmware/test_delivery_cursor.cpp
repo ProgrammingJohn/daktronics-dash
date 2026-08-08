@@ -8,7 +8,13 @@ int main() {
   auto first = cursor.evaluate(50);
   assert(first.should_send);
   assert(first.overwritten_frames == 0);
-  cursor.mark_sent(50);
+  cursor.begin_delivery(50, first.overwritten_frames);
+  cursor.cancel_delivery();
+
+  // A failed/partial write must leave the current state eligible to retry.
+  assert(cursor.evaluate(50).should_send);
+  cursor.begin_delivery(50, 0);
+  assert(cursor.complete_delivery() == 0);
 
   // A client disconnect does not reset the boot-session high-water mark.
   auto reconnect = cursor.evaluate(50);
@@ -18,7 +24,8 @@ int main() {
   auto gap = cursor.evaluate(53);
   assert(gap.should_send);
   assert(gap.overwritten_frames == 2);
-  cursor.mark_sent(53);
+  cursor.begin_delivery(53, gap.overwritten_frames);
+  assert(cursor.complete_delivery() == 2);
 
   cursor.reset_session();
   auto new_session = cursor.evaluate(1);

@@ -167,7 +167,6 @@ void ConnectionServer::service_active(uint32_t now_ms,
 
   const DeliveryDecision delivery = delivery_cursor_.evaluate(state_seq);
   if (delivery.should_send) {
-    metrics_.overwritten_frames += delivery.overwritten_frames;
     ProtocolFields snapshot_fields = fields(now_ms, state_seq, serial_age);
     const std::size_t length = encode_snapshot_json(
         snapshot_fields, latest_frame.frame(), json, sizeof(output_) - 4);
@@ -175,7 +174,7 @@ void ConnectionServer::service_active(uint32_t now_ms,
       abandon_client(true);
       return;
     }
-    delivery_cursor_.mark_sent(state_seq);
+    delivery_cursor_.begin_delivery(state_seq, delivery.overwritten_frames);
     return;
   }
 
@@ -222,6 +221,7 @@ bool ConnectionServer::flush_output() {
   if (output_offset_ == output_length_) {
     output_length_ = 0;
     output_offset_ = 0;
+    metrics_.overwritten_frames += delivery_cursor_.complete_delivery();
   }
   return true;
 }
@@ -239,6 +239,7 @@ bool ConnectionServer::socket_writable() {
 
 void ConnectionServer::abandon_client(bool write_failure) {
   if (write_failure) ++metrics_.tcp_write_failures;
+  delivery_cursor_.cancel_delivery();
   if (client_) client_.stop();
   client_ = WiFiClient();
   state_ = ClientState::LISTENING;

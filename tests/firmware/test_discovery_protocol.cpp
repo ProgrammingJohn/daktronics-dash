@@ -32,7 +32,7 @@ int main() {
 
   std::string any_device = request(
       "", "DISCOVER", "0011223344556677");
-  assert(dakdash::decode_discover_json(
+  assert(!dakdash::decode_discover_json(
       any_device.c_str(), any_device.size(), device_id, nonce, sizeof(nonce)));
 
   for (const std::string& invalid : {
