@@ -208,6 +208,7 @@ The frontend does not import or understand serial, TCP, UDP, discovery, framing,
 ```ts
 interface SessionSnapshot {
   session: {
+    session_id: string;
     sport: SportId;
     source: "synced" | "manual";
     control_authority: "daktronics" | "manual";
