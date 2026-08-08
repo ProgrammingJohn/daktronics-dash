@@ -11,9 +11,13 @@
 .toggle,
 .clockField { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #242528; }
 .controlLabel { color: var(--text-muted); font-size: 12px; }
-.counter { display: grid; grid-template-columns: 32px 40px 32px; align-items: center; text-align: center; }
+.counter { display: grid; grid-template-columns: 32px 48px 32px; align-items: center; text-align: center; }
 .counter button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-raised); color: var(--text-strong); cursor: pointer; }
-.counter output { font-weight: 800; }
+.counter input { width: 48px; height: 32px; padding: 4px; border: 1px solid transparent; border-radius: 3px; background: transparent; color: var(--text-strong); font: inherit; font-weight: 800; text-align: center; }
+.counter input:hover { border-color: var(--border); }
+.counter input:focus { border-color: var(--accent); outline: 2px solid var(--accent-soft); background: var(--surface-raised); }
+.counter input::-webkit-inner-spin-button,
+.counter input::-webkit-outer-spin-button { margin: 0; appearance: none; }
 .toggle { width: 100%; color: var(--text-muted); font: inherit; font-size: 12px; cursor: pointer; }
 .toggle strong { color: var(--text-strong); }
 .toggle[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }

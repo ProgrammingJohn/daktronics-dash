@@ -17,17 +17,7 @@ export function ControlField<TScore>({ control, score, on_change }: ControlField
   const value = control.value(score);
 
   if (control.kind === "counter") {
-    const numeric = Number(value);
-    return (
-      <div className={styles.controlField}>
-        <span className={styles.controlLabel}>{control.label}</span>
-        <div className={styles.counter}>
-          <button aria-label={`${control.label} decrease`} onClick={() => on_change(clamp(numeric - 1, control.min, control.max))}>−</button>
-          <output aria-label={`${control.label} value`}>{numeric}</output>
-          <button aria-label={`${control.label} increase`} onClick={() => on_change(clamp(numeric + 1, control.min, control.max))}>+</button>
-        </div>
-      </div>
-    );
+    return <CounterControl control={control} value={Number(value)} on_change={on_change} />;
   }
 
   if (control.kind === "toggle") {
@@ -56,6 +46,95 @@ export function ControlField<TScore>({ control, score, on_change }: ControlField
   }
 
   return <button className={styles.action} onClick={() => on_change(value)}>{control.label}</button>;
+}
+
+function CounterControl<TScore>({
+  control,
+  value,
+  on_change
+}: {
+  control: ControlDefinition<TScore>;
+  value: number;
+  on_change(input: ControlInput): Promise<void> | void;
+}) {
+  const [draft, set_draft] = useState(String(value));
+  const [editing, set_editing] = useState(false);
+
+  useEffect(() => {
+    if (!editing) set_draft(String(value));
+  }, [editing, value]);
+
+  const normalized_draft = (): number | null => {
+    if (draft.trim() === "") return null;
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed)) return null;
+    return clamp(Math.trunc(parsed), control.min, control.max);
+  };
+
+  const commit = () => {
+    const next = normalized_draft();
+    if (next === null) {
+      set_draft(String(value));
+      return;
+    }
+    set_draft(String(next));
+    if (next !== value) void on_change(next);
+  };
+
+  const adjust = (delta: number) => {
+    const base = normalized_draft() ?? value;
+    const next = clamp(base + delta, control.min, control.max);
+    set_draft(String(next));
+    void on_change(next);
+  };
+
+  return (
+    <div className={styles.controlField}>
+      <span className={styles.controlLabel}>{control.label}</span>
+      <div className={styles.counter}>
+        <button
+          type="button"
+          aria-label={`${control.label} decrease`}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => adjust(-1)}
+        >
+          −
+        </button>
+        <input
+          aria-label={`${control.label} value`}
+          type="number"
+          inputMode="numeric"
+          step="1"
+          min={control.min}
+          max={control.max}
+          value={draft}
+          onFocus={() => set_editing(true)}
+          onChange={(event) => set_draft(event.target.value)}
+          onBlur={() => {
+            commit();
+            set_editing(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commit();
+            } else if (event.key === "Escape") {
+              event.preventDefault();
+              set_draft(String(value));
+            }
+          }}
+        />
+        <button
+          type="button"
+          aria-label={`${control.label} increase`}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => adjust(1)}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ClockControl({

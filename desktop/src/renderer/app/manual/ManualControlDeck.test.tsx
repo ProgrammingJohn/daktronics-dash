@@ -38,6 +38,49 @@ describe("ManualControlDeck", () => {
     });
   });
 
+  test("counter values are directly editable and commit on Enter", async () => {
+    const client = new FakeBackendClient();
+    render(
+      <SessionProvider client={client}>
+        <App />
+      </SessionProvider>
+    );
+    await launch_manual(client);
+
+    const home_score = screen.getByRole("spinbutton", { name: "Home score value" });
+    fireEvent.change(home_score, { target: { value: "27" } });
+    expect((await client.get_active_snapshot()).scoreboard.revision).toBe(0);
+
+    fireEvent.keyDown(home_score, { key: "Enter" });
+    await waitFor(async () => {
+      expect((await client.get_active_snapshot()).scoreboard.fields.home_score).toBe(27);
+      expect(program_field("home_score")).toBe("27");
+    });
+  });
+
+  test("counter edits commit on blur, clamp to limits, and cancel on Escape", async () => {
+    const client = new FakeBackendClient();
+    render(
+      <SessionProvider client={client}>
+        <App />
+      </SessionProvider>
+    );
+    await launch_manual(client);
+
+    const home_score = screen.getByRole("spinbutton", { name: "Home score value" });
+    fireEvent.change(home_score, { target: { value: "500" } });
+    fireEvent.blur(home_score);
+    await waitFor(async () => {
+      expect((await client.get_active_snapshot()).scoreboard.fields.home_score).toBe(99);
+    });
+
+    fireEvent.focus(home_score);
+    fireEvent.change(home_score, { target: { value: "12" } });
+    fireEvent.keyDown(home_score, { key: "Escape" });
+    expect(home_score).toHaveValue(99);
+    expect((await client.get_active_snapshot()).scoreboard.fields.home_score).toBe(99);
+  });
+
   test("clock edits stay local until Set clock is pressed", async () => {
     const client = new FakeBackendClient();
     render(
