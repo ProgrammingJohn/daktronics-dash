@@ -48,6 +48,7 @@ class LatestStateStore:
         self._device_id = None
         self._session_id = None
         self._state_seq = None
+        self._generation_state_seq = None
         self._received_ns = None
         self._serial_age_ms = None
         self._published_generation = None
@@ -66,7 +67,7 @@ class LatestStateStore:
             self._transport_connected = False
             self._transport_seen = False
             self._heartbeat_ns = None
-            self._state_seq = None
+            self._generation_state_seq = None
             self._incompatible = False
             return self._generation
 
@@ -105,7 +106,8 @@ class LatestStateStore:
             elif envelope.session_id != self._generation_session_id:
                 self._counters["old_generation"] += 1
                 return False
-            if self._state_seq is not None and envelope.state_seq <= self._state_seq:
+            if (self._generation_state_seq is not None and
+                    envelope.state_seq <= self._generation_state_seq):
                 self._counters["out_of_order"] += 1
                 return False
             self._score = _freeze_mapping(score)
@@ -113,6 +115,7 @@ class LatestStateStore:
             self._device_id = envelope.device_id
             self._session_id = envelope.session_id
             self._state_seq = envelope.state_seq
+            self._generation_state_seq = envelope.state_seq
             self._received_ns = received_ns
             self._serial_age_ms = envelope.serial_age_ms
             self._published_generation = generation

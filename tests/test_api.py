@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from main import app
 from services.runtime import runtime
@@ -37,6 +38,18 @@ class ApiTests(unittest.TestCase):
         response = self.client.get("/api/scoreboard-service/get-score")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), {"home_score": 7, "away_score": 3})
+
+    @mock.patch.object(runtime, "start_manual", return_value=False)
+    def test_manual_start_reports_failed_replacement(self, start_manual):
+        response = self.client.post(
+            "/api/scoreboard-service/start",
+            json={"scoreboard": "football", "method": "manual"},
+        )
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(
+            response.get_json()["error"],
+            "Previous scoreboard service did not stop",
+        )
 
     def test_synced_start_requires_device_identity(self):
         response = self.client.post(

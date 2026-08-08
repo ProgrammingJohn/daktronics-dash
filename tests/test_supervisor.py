@@ -56,9 +56,10 @@ class SequenceFakeTransport(BlockingFakeTransport):
 
 
 class ClosingSequenceFakeTransport(SequenceFakeTransport):
-    def __init__(self, session_id, messages):
+    def __init__(self, session_id, messages, hello_packet_seq=1):
         super().__init__(messages)
         self._session_id = session_id
+        self._hello_packet_seq = hello_packet_seq
 
     def handshake(self, timeout_s):
         self.handshaken.set()
@@ -67,7 +68,7 @@ class ClosingSequenceFakeTransport(SequenceFakeTransport):
             MessageType.HELLO,
             "wt32-aabbccddeeff",
             self._session_id,
-            1,
+            self._hello_packet_seq,
             0,
             100,
             9999,
@@ -176,7 +177,8 @@ class SupervisorTests(unittest.TestCase):
             "boot-1", [replace(snapshot(7, payload, "boot-1"), packet_seq=9)]
         )
         second = ClosingSequenceFakeTransport(
-            "boot-1", [replace(snapshot(8, payload, "boot-1"), packet_seq=10)]
+            "boot-1", [replace(snapshot(8, payload, "boot-1"), packet_seq=11)],
+            hello_packet_seq=10,
         )
         third = SequenceFakeTransport(
             [replace(snapshot(1, payload, "boot-2"), packet_seq=2)],
@@ -197,6 +199,74 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(view.revision, 3)
         self.assertEqual(view.session_id, "boot-2")
         self.assertEqual(view.state_seq, 1)
+
+    def test_same_session_state_sequence_rollback_is_rejected(self):
+        payload = b"12:00HOME      GUEST     2233146311<>403339"
+        first = ClosingSequenceFakeTransport(
+            "boot-1", [replace(snapshot(7, payload, "boot-1"), packet_seq=9)]
+        )
+        replay = SequenceFakeTransport(
+            [replace(snapshot(6, payload, "boot-1"), packet_seq=11)]
+        )
+        replay._hello_packet_seq = 10
+
+        def replay_handshake(timeout_s):
+            replay.handshaken.set()
+            return Envelope(
+                PROTOCOL_VERSION, MessageType.HELLO,
+                "wt32-aabbccddeeff", "boot-1", 10, 0, 100, 9999,
+            )
+
+        replay.handshake = replay_handshake
+        factory = FactorySequence([first, replay])
+        store = LatestStateStore()
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234, "wt32-aabbccddeeff",
+            store, transport_factory=factory,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.0
+        while supervisor.protocol_errors == 0 and time.monotonic() < deadline:
+            time.sleep(0.005)
+        supervisor.stop()
+        view = store.view(time.monotonic_ns())
+        self.assertEqual(view.revision, 1)
+        self.assertEqual(view.state_seq, 7)
+        self.assertGreaterEqual(supervisor.protocol_errors, 1)
+
+    def test_socket_timeout_waits_for_three_misses(self):
+        import socket
+
+        class SocketTimeoutTransport(BlockingFakeTransport):
+            def __init__(self):
+                super().__init__()
+                self.receives = 0
+
+            def receive(self, timeout_s):
+                self.receives += 1
+                raise socket.timeout("timed out")
+
+        transport = SocketTimeoutTransport()
+        factory = FactorySequence([transport, BlockingFakeTransport()])
+        now = 0
+
+        def advancing_clock():
+            nonlocal now
+            now += 1_100_000_000
+            return now
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234, "wt32-aabbccddeeff",
+            LatestStateStore(), transport_factory=factory,
+            monotonic_ns=advancing_clock,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.0
+        while factory.calls < 2 and time.monotonic() < deadline:
+            time.sleep(0.005)
+        supervisor.stop()
+        self.assertGreaterEqual(factory.calls, 2)
+        self.assertGreaterEqual(transport.receives, 3)
 
     def test_three_missed_heartbeats_force_reconnect(self):
         first = BlockingFakeTransport()

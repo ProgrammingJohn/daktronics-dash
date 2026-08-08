@@ -1,6 +1,7 @@
 """Cancellable scoreboard connection lifecycle and reconnect supervision."""
 
 import random
+import socket
 import threading
 import time
 
@@ -43,6 +44,10 @@ class ConnectionSupervisor(threading.Thread):
     def run(self):
         delays = (0.25, 0.5, 1.0, 2.0, 5.0)
         backoff_index = 0
+        current_session_id = None
+        seen_session_ids = set()
+        session_packet_seq = None
+        session_state_seq = None
         while not self._stop_event.is_set():
             transport = None
             generation = None
@@ -56,25 +61,35 @@ class ConnectionSupervisor(threading.Thread):
                     break
                 hello = transport.handshake(timeout_s=2.0)
                 self._validate_hello(hello)
+                if hello.session_id == current_session_id:
+                    if (session_packet_seq is not None and
+                            hello.packet_seq <= session_packet_seq):
+                        raise ProtocolError("HELLO packet sequence replayed")
+                elif hello.session_id in seen_session_ids:
+                    raise ProtocolError("prior session replayed")
+                else:
+                    current_session_id = hello.session_id
+                    seen_session_ids.add(hello.session_id)
+                    session_state_seq = None
+                session_packet_seq = hello.packet_seq
                 handshake_complete = True
                 generation = self._store.start_generation()
                 now_ns = self._monotonic_ns()
                 self._store.set_transport(generation, True, now_ns)
                 self._store.record_heartbeat(generation, now_ns)
                 session_id = hello.session_id
-                last_packet_seq = hello.packet_seq
                 last_received_ns = now_ns
                 backoff_index = 0
                 while not self._stop_event.is_set():
                     try:
                         envelope = transport.receive(timeout_s=1.0)
-                    except TimeoutError:
+                    except (TimeoutError, socket.timeout):
                         if (self._monotonic_ns() - last_received_ns >=
                                 self._HEARTBEAT_TIMEOUT_NS):
                             raise TimeoutError("three heartbeats missed")
                         continue
-                    last_packet_seq = self._validate_message(
-                        envelope, session_id, last_packet_seq
+                    session_packet_seq = self._validate_message(
+                        envelope, session_id, session_packet_seq
                     )
                     received_ns = self._monotonic_ns()
                     last_received_ns = received_ns
@@ -82,6 +97,10 @@ class ConnectionSupervisor(threading.Thread):
                         self._store.record_heartbeat(generation, received_ns)
                     elif envelope.message_type is MessageType.SNAPSHOT:
                         self._store.record_heartbeat(generation, received_ns)
+                        if (session_state_seq is not None and
+                                envelope.state_seq <= session_state_seq):
+                            raise ProtocolError("state sequence did not increase")
+                        session_state_seq = envelope.state_seq
                         try:
                             score = parse_scoreboard_frame(self._sport, envelope.payload)
                         except FrameParseError:

@@ -56,7 +56,8 @@ def start_service():
     if not method:
         return jsonify({'message': 'Method is required', 'data': None}), 400
     if method == 'manual':
-        runtime.start_manual(scoreboard_name)
+        if not runtime.start_manual(scoreboard_name):
+            return jsonify({'error': 'Previous scoreboard service did not stop'}), 503
     elif method == 'synced':
         device_id = data.get('device_id')
         if not ip:
