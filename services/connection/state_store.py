@@ -51,6 +51,7 @@ class LatestStateStore:
         self._received_ns = None
         self._serial_age_ms = None
         self._published_generation = None
+        self._incompatible = False
         self._counters = {
             "published": 0,
             "old_generation": 0,
@@ -66,6 +67,7 @@ class LatestStateStore:
             self._transport_seen = False
             self._heartbeat_ns = None
             self._state_seq = None
+            self._incompatible = False
             return self._generation
 
     def set_transport(self, generation, connected, received_ns):
@@ -85,6 +87,15 @@ class LatestStateStore:
             self._heartbeat_ns = received_ns
             return True
 
+    def mark_incompatible(self, generation):
+        with self._lock:
+            if not self._is_current_generation(generation):
+                return False
+            self._transport_connected = False
+            self._transport_seen = True
+            self._incompatible = True
+            return True
+
     def publish(self, generation, envelope: Envelope, score, received_ns):
         with self._lock:
             if not self._is_current_generation(generation):
@@ -97,7 +108,7 @@ class LatestStateStore:
             if self._state_seq is not None and envelope.state_seq <= self._state_seq:
                 self._counters["out_of_order"] += 1
                 return False
-            self._score = dict(score)
+            self._score = _freeze_mapping(score)
             self._revision += 1
             self._device_id = envelope.device_id
             self._session_id = envelope.session_id
@@ -136,6 +147,8 @@ class LatestStateStore:
         return elapsed_ns // 1_000_000 + self._serial_age_ms
 
     def _health(self, now_ns, source_age_ms):
+        if self._incompatible:
+            return HealthState.INCOMPATIBLE
         if not self._transport_connected:
             if self._transport_seen:
                 return HealthState.DISCONNECTED
@@ -151,3 +164,17 @@ class LatestStateStore:
         if source_age_ms * 1_000_000 >= self._source_stale_ns:
             return HealthState.STALE_SOURCE
         return HealthState.LIVE
+
+
+def _freeze_mapping(mapping):
+    return MappingProxyType({key: _freeze_value(value) for key, value in mapping.items()})
+
+
+def _freeze_value(value):
+    if isinstance(value, Mapping):
+        return _freeze_mapping(value)
+    if isinstance(value, list):
+        return tuple(_freeze_value(item) for item in value)
+    if isinstance(value, tuple):
+        return tuple(_freeze_value(item) for item in value)
+    return value

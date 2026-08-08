@@ -9,8 +9,10 @@ from services.connection.supervisor import ConnectionSupervisor
 
 
 class ScoreboardRuntime:
-    def __init__(self):
+    def __init__(self, supervisor_factory=ConnectionSupervisor):
+        self._lifecycle_lock = threading.Lock()
         self._lock = threading.Lock()
+        self._supervisor_factory = supervisor_factory
         self._store = LatestStateStore()
         self._supervisor = None
         self._mode = None
@@ -19,45 +21,56 @@ class ScoreboardRuntime:
         self._manual_sequence = 0
 
     def start_synced(self, sport, host, port, expected_device_id):
-        self.stop()
-        supervisor = ConnectionSupervisor(
-            sport, host, port, expected_device_id, self._store
-        )
-        with self._lock:
-            self._mode = "synced"
-            self._sport = sport
-            self._supervisor = supervisor
-            self._manual_generation = None
-        supervisor.start()
+        with self._lifecycle_lock:
+            if not self._stop_locked():
+                return False
+            supervisor = self._supervisor_factory(
+                sport, host, port, expected_device_id, self._store
+            )
+            with self._lock:
+                self._mode = "synced"
+                self._sport = sport
+                self._supervisor = supervisor
+                self._manual_generation = None
+            supervisor.start()
+            return True
 
     def start_manual(self, sport):
-        self.stop()
-        generation = self._store.start_generation()
-        now_ns = time.monotonic_ns()
-        self._store.set_transport(generation, True, now_ns)
-        self._store.record_heartbeat(generation, now_ns)
-        with self._lock:
-            self._mode = "manual"
-            self._sport = sport
-            self._manual_generation = generation
-            self._manual_sequence = 0
+        with self._lifecycle_lock:
+            if not self._stop_locked():
+                return False
+            generation = self._store.start_generation()
+            now_ns = time.monotonic_ns()
+            self._store.set_transport(generation, True, now_ns)
+            self._store.record_heartbeat(generation, now_ns)
+            with self._lock:
+                self._mode = "manual"
+                self._sport = sport
+                self._manual_generation = generation
+                self._manual_sequence = 0
+            return True
 
     def stop(self, timeout_s=2.0):
+        with self._lifecycle_lock:
+            return self._stop_locked(timeout_s)
+
+    def _stop_locked(self, timeout_s=2.0):
         with self._lock:
             supervisor = self._supervisor
             manual_generation = self._manual_generation
-            self._supervisor = None
-            self._manual_generation = None
-            self._mode = None
-            self._sport = None
-        stopped = True
         if supervisor is not None:
-            stopped = supervisor.stop(timeout_s)
+            if not supervisor.stop(timeout_s):
+                return False
         if manual_generation is not None:
             self._store.set_transport(
                 manual_generation, False, time.monotonic_ns()
             )
-        return stopped
+        with self._lock:
+            self._supervisor = None
+            self._manual_generation = None
+            self._mode = None
+            self._sport = None
+        return True
 
     def update_manual(self, score):
         with self._lock:
@@ -94,7 +107,7 @@ class ScoreboardRuntime:
     def score(self):
         if not self.is_running():
             return None
-        return dict(self._store.view(time.monotonic_ns()).score)
+        return _plain_value(self._store.view(time.monotonic_ns()).score)
 
     def status(self):
         view = self._store.view(time.monotonic_ns())
@@ -102,7 +115,8 @@ class ScoreboardRuntime:
             mode = self._mode
         return {
             "status": (
-                view.health.value if mode is not None
+                HealthState.LIVE.value if mode == "manual"
+                else view.health.value if mode is not None
                 else HealthState.DISCONNECTED.value
             ),
             "transport": "manual" if mode == "manual" else "tcp",
@@ -113,3 +127,11 @@ class ScoreboardRuntime:
 
 
 runtime = ScoreboardRuntime()
+
+
+def _plain_value(value):
+    if hasattr(value, "items"):
+        return {key: _plain_value(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_plain_value(item) for item in value]
+    return value

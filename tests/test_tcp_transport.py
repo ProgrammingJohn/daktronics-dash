@@ -1,6 +1,7 @@
 import socket
 import threading
 import unittest
+from unittest import mock
 
 from services.connection.protocol import (
     Envelope,
@@ -95,6 +96,15 @@ class TcpTransportTests(unittest.TestCase):
             self.assertEqual(server.recv(1), b"")
         finally:
             server.close()
+
+    @mock.patch("services.connection.tcp_transport.socket.create_connection")
+    def test_connect_uses_short_cancellable_attempt(self, create_connection):
+        create_connection.side_effect = OSError("unreachable")
+        with self.assertRaises(OSError):
+            TcpTransport.connect("10.93.37.138", 1234, "device")
+        create_connection.assert_called_once_with(
+            ("10.93.37.138", 1234), timeout=0.5
+        )
 
 
 if __name__ == "__main__":

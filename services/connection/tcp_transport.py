@@ -28,7 +28,7 @@ class TcpTransport:
 
     @classmethod
     def connect(cls, host, port, expected_device_id):
-        sock = socket.create_connection((host, port), timeout=2.0)
+        sock = socket.create_connection((host, port), timeout=0.5)
         try:
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)

@@ -61,11 +61,16 @@ def start_service():
         device_id = data.get('device_id')
         if not ip:
             return jsonify({'error': 'IP address is required'}), 400
-        if not port:
-            return jsonify({'error': 'Port is required'}), 400
+        try:
+            port = int(port)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Valid port is required'}), 400
+        if not 1 <= port <= 65535:
+            return jsonify({'error': 'Valid port is required'}), 400
         if not device_id:
             return jsonify({'error': 'Device ID is required'}), 400
-        runtime.start_synced(scoreboard_name, ip, port, device_id)
+        if not runtime.start_synced(scoreboard_name, ip, port, device_id):
+            return jsonify({'error': 'Previous scoreboard service did not stop'}), 503
     else:
         return jsonify({'error': 'Unsupported method'}), 400
     return jsonify({"message": "Started"}), 200

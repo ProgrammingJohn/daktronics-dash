@@ -70,7 +70,7 @@ def decode_envelope(body: bytes) -> Envelope:
         raise ProtocolError("record body exceeds 4096 bytes")
     try:
         document = json.loads(body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as error:
         raise ProtocolError("invalid JSON envelope") from error
     if not isinstance(document, dict):
         raise ProtocolError("envelope must be a JSON object")

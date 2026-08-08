@@ -51,6 +51,22 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.get_json()["error"], "Device ID is required")
 
+    def test_synced_start_rejects_invalid_port(self):
+        for port in ("not-a-port", 0, 70000):
+            with self.subTest(port=port):
+                response = self.client.post(
+                    "/api/scoreboard-service/start",
+                    json={
+                        "scoreboard": "football",
+                        "method": "synced",
+                        "ip": "10.93.37.138",
+                        "port": port,
+                        "device_id": "wt32-aabbccddeeff",
+                    },
+                )
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.get_json()["error"], "Valid port is required")
+
 
 if __name__ == "__main__":
     unittest.main()

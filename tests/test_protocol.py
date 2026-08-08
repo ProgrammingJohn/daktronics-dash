@@ -7,6 +7,7 @@ from services.connection.protocol import (
     MessageType,
     ProtocolError,
     TcpRecordDecoder,
+    decode_envelope,
     encode_tcp_record,
 )
 
@@ -68,6 +69,11 @@ class ProtocolTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ProtocolError, "CRC mismatch"):
             TcpRecordDecoder().feed(record)
+
+    def test_deeply_nested_json_is_reported_as_protocol_error(self):
+        body = ("[" * 1000 + "0" + "]" * 1000).encode()
+        with self.assertRaises(ProtocolError):
+            decode_envelope(body)
 
 
 if __name__ == "__main__":

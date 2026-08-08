@@ -92,6 +92,26 @@ class StateStoreTests(unittest.TestCase):
         self.assertEqual(store.view(0).score, {"home_score": 1})
         self.assertEqual(store.view(0).counters["published"], 1)
 
+    def test_nested_score_values_are_immutable(self):
+        store = LatestStateStore()
+        generation = store.start_generation()
+        store.publish(
+            generation,
+            snapshot(1),
+            {"clock": {"minutes": 12, "seconds": 0}},
+            0,
+        )
+        view = store.view(0)
+        with self.assertRaises(TypeError):
+            view.score["clock"]["minutes"] = 99
+        self.assertEqual(store.view(0).score["clock"]["minutes"], 12)
+
+    def test_incompatible_generation_has_explicit_health(self):
+        store = LatestStateStore()
+        generation = store.start_generation()
+        self.assertTrue(store.mark_incompatible(generation))
+        self.assertEqual(store.view(0).health, HealthState.INCOMPATIBLE)
+
     def test_counts_generation_order_and_disconnect_rejections(self):
         store = LatestStateStore()
         generation = store.start_generation()

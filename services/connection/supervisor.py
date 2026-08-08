@@ -10,6 +10,8 @@ from services.sport_parsers import FrameParseError, parse_scoreboard_frame
 
 
 class ConnectionSupervisor(threading.Thread):
+    _HEARTBEAT_TIMEOUT_NS = 3_000_000_000
+
     def __init__(self, sport, host, port, expected_device_id, store,
                  transport_factory=TcpTransport.connect,
                  monotonic_ns=time.monotonic_ns):
@@ -39,11 +41,12 @@ class ConnectionSupervisor(threading.Thread):
             return self._protocol_errors
 
     def run(self):
-        generation = self._store.start_generation()
         delays = (0.25, 0.5, 1.0, 2.0, 5.0)
         backoff_index = 0
         while not self._stop_event.is_set():
             transport = None
+            generation = None
+            handshake_complete = False
             try:
                 transport = self._transport_factory(
                     self._host, self._port, self._expected_device_id
@@ -52,18 +55,29 @@ class ConnectionSupervisor(threading.Thread):
                 if self._stop_event.is_set():
                     break
                 hello = transport.handshake(timeout_s=2.0)
+                self._validate_hello(hello)
+                handshake_complete = True
+                generation = self._store.start_generation()
                 now_ns = self._monotonic_ns()
                 self._store.set_transport(generation, True, now_ns)
                 self._store.record_heartbeat(generation, now_ns)
                 session_id = hello.session_id
+                last_packet_seq = hello.packet_seq
+                last_received_ns = now_ns
                 backoff_index = 0
                 while not self._stop_event.is_set():
                     try:
                         envelope = transport.receive(timeout_s=1.0)
                     except TimeoutError:
+                        if (self._monotonic_ns() - last_received_ns >=
+                                self._HEARTBEAT_TIMEOUT_NS):
+                            raise TimeoutError("three heartbeats missed")
                         continue
-                    self._validate_message(envelope, session_id)
+                    last_packet_seq = self._validate_message(
+                        envelope, session_id, last_packet_seq
+                    )
                     received_ns = self._monotonic_ns()
+                    last_received_ns = received_ns
                     if envelope.message_type is MessageType.HEARTBEAT:
                         self._store.record_heartbeat(generation, received_ns)
                     elif envelope.message_type is MessageType.SNAPSHOT:
@@ -74,12 +88,24 @@ class ConnectionSupervisor(threading.Thread):
                             self._increment("parse")
                             continue
                         self._store.publish(generation, envelope, score, received_ns)
+                    elif envelope.message_type is MessageType.STATUS:
+                        self._store.record_heartbeat(generation, received_ns)
             except ProtocolError:
                 self._increment("protocol")
+                if not handshake_complete:
+                    generation = self._store.start_generation()
+                    self._store.mark_incompatible(generation)
             except (OSError, TimeoutError):
-                pass
+                if generation is None:
+                    generation = self._store.start_generation()
+                    self._store.set_transport(
+                        generation, False, self._monotonic_ns()
+                    )
             finally:
-                self._store.set_transport(generation, False, self._monotonic_ns())
+                if generation is not None:
+                    self._store.set_transport(
+                        generation, False, self._monotonic_ns()
+                    )
                 if transport is not None:
                     transport.close()
                 self._clear_transport(transport)
@@ -100,11 +126,25 @@ class ConnectionSupervisor(threading.Thread):
             self.join(timeout_s)
         return not self.is_alive()
 
-    def _validate_message(self, envelope, session_id):
+    def _validate_hello(self, envelope):
+        if envelope.message_type is not MessageType.HELLO:
+            raise ProtocolError("expected HELLO response")
+        if envelope.device_id != self._expected_device_id:
+            raise ProtocolError("unexpected device ID")
+        if not envelope.session_id:
+            raise ProtocolError("HELLO session is empty")
+
+    def _validate_message(self, envelope, session_id, last_packet_seq):
         if envelope.device_id != self._expected_device_id:
             raise ProtocolError("message device ID changed")
         if envelope.session_id != session_id:
             raise ProtocolError("message session changed")
+        if envelope.packet_seq <= last_packet_seq:
+            raise ProtocolError("packet sequence did not increase")
+        if envelope.message_type not in {
+                MessageType.SNAPSHOT, MessageType.HEARTBEAT, MessageType.STATUS}:
+            raise ProtocolError("unexpected post-handshake message type")
+        return envelope.packet_seq
 
     def _set_transport(self, transport):
         with self._transport_lock:
