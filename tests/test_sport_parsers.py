@@ -12,6 +12,13 @@ class SportParserTests(unittest.TestCase):
         self.assertEqual(score["home_score"], 22)
         self.assertEqual(score["away_score"], 33)
         self.assertEqual(score["yards_to_go"], 11)
+        self.assertIs(score["home_possesion"], False)
+
+        home_possession = bytearray(
+            b"12:00HOME      GUEST     2233146311<>403339"
+        )
+        home_possession[36] = ord("<")
+        score = parse_scoreboard_frame("football", bytes(home_possession))
         self.assertIs(score["home_possesion"], True)
 
     def test_basketball_frame(self):

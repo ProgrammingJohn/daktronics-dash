@@ -155,9 +155,9 @@ def _parse_football(text: str) -> Dict[str, Any]:
     if not possession:
         home_possesion = defaults["home_possesion"]
     elif possession == ">":
-        home_possesion = True
-    elif possession == "<":
         home_possesion = False
+    elif possession == "<":
+        home_possesion = True
     else:
         raise FrameParseError("Invalid possession indicator")
     return {
