@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   discovery_status_schema,
   session_snapshot_schema,
+  sport_id_schema,
   type AppearancePayload,
   type ConnectionStatus,
   type LaunchSessionInput,
@@ -30,6 +31,10 @@ const backend_status_schema = z.object({
   revision: z.number().int().nonnegative(),
   source_age_ms: z.number().nonnegative().nullable(),
   discovery: discovery_status_schema.optional()
+});
+
+const backend_scoreboard_name_schema = z.object({
+  scoreboard_name: sport_id_schema
 });
 
 type BackendStatus = z.infer<typeof backend_status_schema>;
@@ -202,6 +207,9 @@ export class FlaskBackendClient implements BackendClient {
   }
 
   async get_active_snapshot(signal?: AbortSignal): Promise<SessionSnapshot> {
+    if (this.active_snapshot === null) {
+      return structuredClone(await this.recover_active_session(signal));
+    }
     await this.refresh(signal);
     return structuredClone(this.require_active());
   }
@@ -388,6 +396,50 @@ export class FlaskBackendClient implements BackendClient {
       }
     }
     this.active_snapshot = this.with_status(snapshot, status, score_changed);
+    this.persist();
+    return this.active_snapshot;
+  }
+
+  private async recover_active_session(signal?: AbortSignal): Promise<SessionSnapshot> {
+    const name_response = await this.request(
+      "/api/scoreboard-service/get-scoreboard-name",
+      { signal }
+    );
+    const { scoreboard_name: sport } = backend_scoreboard_name_schema.parse(name_response);
+    const status = await this.get_status(signal);
+    const backend_is_manual = status.source === "manual";
+    let fields = structuredClone(get_sport(sport).initial_score) as Record<string, unknown>;
+    let score_loaded = false;
+
+    try {
+      const candidate = await this.request("/api/scoreboard-service/get-score", { signal });
+      fields = normalize_backend_score(sport, candidate);
+      score_loaded = true;
+    } catch {
+      signal?.throwIfAborted();
+      // Before the first serial snapshot the backend has no valid score yet.
+    }
+
+    const recovered: SessionSnapshot = {
+      session: {
+        session_id: `backend-${sport}`,
+        sport,
+        source: backend_is_manual ? "manual" : "synced",
+        control_authority: backend_is_manual ? "manual" : "daktronics"
+      },
+      connection: {
+        status: "disconnected",
+        backend_status: status.status,
+        last_update_at: null,
+        source_age_ms: null,
+        message: null,
+        transport: status.transport,
+        source: status.source,
+        discovery: status.discovery
+      },
+      scoreboard: { revision: status.revision, fields }
+    };
+    this.active_snapshot = this.with_status(recovered, status, score_loaded);
     this.persist();
     return this.active_snapshot;
   }

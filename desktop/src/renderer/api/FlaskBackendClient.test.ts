@@ -63,6 +63,62 @@ describe("FlaskBackendClient", () => {
     });
   });
 
+  test("recovers the active backend session when the viewer has no local storage", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json_response({ scoreboard_name: "football" }))
+      .mockResolvedValueOnce(
+        json_response({
+          status: "DISCONNECTED",
+          transport: "tcp",
+          source: "daktronics",
+          revision: 6,
+          source_age_ms: 900
+        })
+      )
+      .mockResolvedValueOnce(
+        json_response({
+          home_score: 14,
+          away_score: 7,
+          clock: { minutes: 10, seconds: 37 },
+          period: 1,
+          down: 1,
+          yards_to_go: 10,
+          home_timeouts: 3,
+          away_timeouts: 3,
+          home_possesion: true
+        })
+      );
+    const client = new FlaskBackendClient({ fetcher, storage: null });
+
+    const snapshot = await client.get_active_snapshot();
+
+    expect(snapshot).toMatchObject({
+      session: {
+        session_id: "backend-football",
+        sport: "football",
+        source: "synced",
+        control_authority: "daktronics"
+      },
+      connection: {
+        status: "disconnected",
+        backend_status: "DISCONNECTED",
+        transport: "tcp",
+        source: "daktronics",
+        source_age_ms: 900
+      },
+      scoreboard: {
+        revision: 6,
+        fields: { home_score: 14, away_score: 7, yards: 10 }
+      }
+    });
+    expect(fetcher.mock.calls.map(([input]) => String(input))).toEqual([
+      "/api/scoreboard-service/get-scoreboard-name",
+      "/api/scoreboard-service/status",
+      "/api/scoreboard-service/get-score"
+    ]);
+  });
+
   test("starts discovery with blank IP and exposes discovery progress", async () => {
     const discovery = {
       phase: "BROADCAST_PROBING",

@@ -5,7 +5,7 @@ import { FlaskBackendClient } from "../api/FlaskBackendClient";
 import { Viewer } from "./Viewer";
 
 const backend_url = window.location.protocol === "file:" ? "http://127.0.0.1:5000" : "";
-const client = new FlaskBackendClient({ base_url: backend_url, storage: window.localStorage });
+const client = new FlaskBackendClient({ base_url: backend_url, storage: null });
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root");
