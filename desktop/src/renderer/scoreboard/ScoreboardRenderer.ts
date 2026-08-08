@@ -1,5 +1,6 @@
 import type { SvgBinding } from "../sports/types";
 import { rewrite_svg_ids } from "./svg_references";
+import { install_scoreboard_fonts } from "./scoreboard_fonts";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const RESET_STYLE = `
@@ -87,6 +88,7 @@ export class ScoreboardRenderer {
   private mounted_svg: SVGSVGElement | null = null;
 
   constructor(host: HTMLElement) {
+    install_scoreboard_fonts(host.ownerDocument);
     this.shadowRoot = host.attachShadow({ mode: "open" });
     this.id_prefix = `dakdash-${next_instance_number}-`;
     next_instance_number += 1;

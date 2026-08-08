@@ -7,10 +7,6 @@
   data-appearance-field="scoreboard_root"
 >
   <style>
-    @font-face {
-      font-family: Lemonmilk;
-      src: url(/fonts/LEMONMILK-Medium.otf);
-    }
     svg {
       --away_team_text: #004285;
       --home_team_text: #ffffff;
@@ -20,8 +16,8 @@
       --home_team_dark: #004285;
     }
     svg {
-      font-family: Lemonmilk;
-      font-weight: lighter;
+      font-family: "DakDash Scoreboard", Arial, sans-serif;
+      font-weight: 500;
     }
 
     #HomeTimeoutIndicator,
@@ -76,7 +72,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="30"
-        font-weight="light"
+        font-weight="300"
         letter-spacing="0em"
         text-anchor="middle"
       >
@@ -91,7 +87,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="30"
-        font-weight="light"
+        font-weight="300"
         letter-spacing="0em"
         text-anchor="middle"
       >
@@ -106,7 +102,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="30"
-        font-weight="light"
+        font-weight="300"
         letter-spacing="0em"
         text-anchor="middle"
       >
@@ -129,7 +125,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="50"
-        font-weight="bold"
+        font-weight="700"
         letter-spacing="0.05em"
         text-anchor="left"
       >
@@ -173,7 +169,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="58"
-        font-weight="bold"
+        font-weight="700"
         letter-spacing="0em"
         text-anchor="middle"
         x="275"
@@ -192,7 +188,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="50"
-        font-weight="light"
+        font-weight="300"
         letter-spacing="0.05em"
         text-anchor="left"
       >
@@ -205,7 +201,7 @@
         xml:space="preserve"
         style="white-space: normal"
         font-size="58"
-        font-weight="bold"
+        font-weight="700"
         letter-spacing="0em"
         text-anchor="middle"
         x="275"
