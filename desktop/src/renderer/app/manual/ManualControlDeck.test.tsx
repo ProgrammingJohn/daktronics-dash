@@ -67,6 +67,8 @@ describe("ManualControlDeck", () => {
       </SessionProvider>
     );
     await screen.findByRole("radio", { name: /Football/i });
+    fireEvent.change(screen.getByLabelText("IP address"), { target: { value: "10.0.0.20" } });
+    fireEvent.change(screen.getByLabelText("Device ID"), { target: { value: "wt32-test" } });
     screen.getByRole("button", { name: "Launch session" }).click();
     await screen.findByRole("button", { name: "Take manual control…" });
     expect(screen.queryByRole("heading", { name: "Manual controls" })).not.toBeInTheDocument();

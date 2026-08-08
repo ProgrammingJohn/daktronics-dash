@@ -119,10 +119,12 @@ export class FakeBackendClient implements BackendClient {
       },
       connection: {
         status: "live",
-        backend_status: "fake",
+        backend_status: "LIVE",
         last_update_at: now,
         source_age_ms: 0,
-        message: null
+        message: null,
+        transport: input.source === "synced" ? "tcp" : "manual",
+        source: input.source === "synced" ? "daktronics" : "manual"
       },
       scoreboard: {
         revision: 0,

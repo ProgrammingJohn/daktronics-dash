@@ -100,6 +100,34 @@ describe("session_reducer", () => {
     expect(failed.accepted?.scoreboard.fields.home_score).toBe(28);
   });
 
+  test("accepts connection health changes without requiring a score revision", () => {
+    const current = football_snapshot(4, 28);
+    const active = {
+      ...initial_session_state,
+      phase: "active" as const,
+      generation: 1,
+      accepted: current
+    };
+    const disconnected: SessionSnapshot = {
+      ...current,
+      connection: {
+        ...current.connection,
+        status: "disconnected",
+        backend_status: "DISCONNECTED",
+        source_age_ms: 2400
+      }
+    };
+
+    const next = session_reducer(active, {
+      type: "snapshot",
+      generation: 1,
+      snapshot: disconnected
+    });
+
+    expect(next.accepted?.connection.backend_status).toBe("DISCONNECTED");
+    expect(next.accepted?.scoreboard.fields.home_score).toBe(28);
+  });
+
   test("shows optimistic manual state, rolls back failure, and retains at most 20 undo states", () => {
     let state: SessionState = {
       ...initial_session_state,

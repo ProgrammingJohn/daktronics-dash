@@ -68,9 +68,10 @@ export function OperatorConsole() {
         <div className={styles.primary}>
           <ProgramPreview snapshot={snapshot} appearance={appearance} />
           <section className={styles.metrics} aria-label="Connection summary">
+            <div><span>Connection state</span><strong>{snapshot.connection.backend_status}</strong></div>
+            <div><span>Transport</span><strong>{snapshot.connection.transport ?? "—"}</strong></div>
             <div><span>Source age</span><strong>{age === null ? "—" : `${age} ms`}</strong></div>
             <div><span>Revision</span><strong>{snapshot.scoreboard.revision}</strong></div>
-            <div><span>Backend</span><strong>{snapshot.connection.backend_status}</strong></div>
           </section>
         </div>
 
@@ -97,6 +98,7 @@ export function OperatorConsole() {
               <div><dt>Session</dt><dd>{snapshot.session.session_id}</dd></div>
               <div><dt>Last update</dt><dd>{snapshot.connection.last_update_at ?? "Never"}</dd></div>
               <div><dt>Message</dt><dd>{snapshot.connection.message ?? "No issues"}</dd></div>
+              <div><dt>Source</dt><dd>{snapshot.connection.source ?? "—"}</dd></div>
             </dl>
           </details>
 

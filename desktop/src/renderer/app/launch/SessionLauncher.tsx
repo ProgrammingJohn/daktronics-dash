@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import type { SportId, TransmissionSource } from "../../domain/session";
 import { use_session } from "../../state/SessionProvider";
+import {
+  default_connection,
+  load_connection,
+  save_connection
+} from "./connection_preferences";
 import styles from "./SessionLauncher.module.css";
 
 const source_labels: Record<TransmissionSource, { title: string; detail: string }> = {
@@ -18,6 +23,13 @@ export function SessionLauncher() {
   const { capabilities, launch } = use_session();
   const [sport, set_sport] = useState<SportId>("football");
   const [source, set_source] = useState<TransmissionSource>("synced");
+  const [connection, set_connection] = useState(() => {
+    try {
+      return load_connection(window.localStorage);
+    } catch {
+      return default_connection;
+    }
+  });
   const [error, set_error] = useState<string | null>(null);
   const selected_capability = useMemo(
     () => capabilities.find((entry) => entry.sport === sport),
@@ -36,7 +48,22 @@ export function SessionLauncher() {
   const submit = (event: FormEvent): void => {
     event.preventDefault();
     set_error(null);
-    void launch({ sport, source }).catch((reason: unknown) => {
+    if (source === "synced") {
+      if (!connection.ip.trim() || !connection.device_id.trim()) {
+        set_error("IP address and Device ID are required");
+        return;
+      }
+      if (connection.port < 1 || connection.port > 65535) {
+        set_error("Port must be between 1 and 65535");
+        return;
+      }
+      try {
+        save_connection(window.localStorage, connection);
+      } catch {
+        // Connection can still launch when browser storage is unavailable.
+      }
+    }
+    void launch({ sport, source, ...(source === "synced" ? { connection } : {}) }).catch((reason: unknown) => {
       set_error(reason instanceof Error ? reason.message : "Unable to launch session");
     });
   };
@@ -97,6 +124,50 @@ export function SessionLauncher() {
             })}
           </div>
         </fieldset>
+
+        {source === "synced" && (
+          <fieldset className={styles.fieldset}>
+            <legend>TCP connection</legend>
+            <div className={styles.connectionGrid}>
+              <label>
+                IP address
+                <input
+                  aria-label="IP address"
+                  required
+                  value={connection.ip}
+                  onChange={(event) =>
+                    set_connection((current) => ({ ...current, ip: event.target.value }))
+                  }
+                />
+              </label>
+              <label>
+                Port
+                <input
+                  aria-label="Port"
+                  type="number"
+                  min="1"
+                  max="65535"
+                  required
+                  value={connection.port}
+                  onChange={(event) =>
+                    set_connection((current) => ({ ...current, port: Number(event.target.value) }))
+                  }
+                />
+              </label>
+              <label>
+                Device ID
+                <input
+                  aria-label="Device ID"
+                  required
+                  value={connection.device_id}
+                  onChange={(event) =>
+                    set_connection((current) => ({ ...current, device_id: event.target.value }))
+                  }
+                />
+              </label>
+            </div>
+          </fieldset>
+        )}
 
         {error && <p className={styles.error}>{error}</p>}
         <button

@@ -1,8 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { FakeBackendClient } from "../../api/FakeBackendClient";
 import { SessionProvider } from "../../state/SessionProvider";
 import { App } from "../App";
+
+function fill_synced_connection(): void {
+  fireEvent.change(screen.getByLabelText("IP address"), { target: { value: "10.0.0.20" } });
+  fireEvent.change(screen.getByLabelText("Device ID"), { target: { value: "wt32-test" } });
+}
 
 describe("OperatorConsole", () => {
   beforeEach(() => vi.stubGlobal("confirm", vi.fn(() => false)));
@@ -15,12 +20,15 @@ describe("OperatorConsole", () => {
     );
 
     await screen.findByRole("radio", { name: /Football/i });
+    fill_synced_connection();
     screen.getByRole("button", { name: "Launch session" }).click();
 
     expect(await screen.findByRole("heading", { name: "Football" })).toBeVisible();
     expect(screen.getByText("Daktronics Sync")).toBeVisible();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByText("LIVE")).toBeVisible();
+    expect(screen.getAllByText("LIVE")[0]).toBeVisible();
+    expect(screen.getByText("Transport")).toBeVisible();
+    expect(screen.getByText("Connection state")).toBeVisible();
     expect(screen.getByRole("button", { name: "Take manual control…" })).toBeVisible();
     expect(screen.queryByText("Manual controls")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Team titles and colors" })).toBeVisible();
@@ -66,6 +74,7 @@ describe("OperatorConsole", () => {
       </SessionProvider>
     );
     await screen.findByRole("radio", { name: /Football/i });
+    fill_synced_connection();
     screen.getByRole("button", { name: "Launch session" }).click();
     await screen.findByRole("heading", { name: "Football" });
 

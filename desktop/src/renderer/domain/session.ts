@@ -16,7 +16,9 @@ export const session_snapshot_schema = z.object({
     backend_status: z.string(),
     last_update_at: z.string().nullable(),
     source_age_ms: z.number().nonnegative().nullable(),
-    message: z.string().nullable()
+    message: z.string().nullable(),
+    transport: z.string().optional(),
+    source: z.string().optional()
   }),
   scoreboard: z.object({
     revision: z.number().int().nonnegative(),
@@ -38,6 +40,13 @@ export interface SessionCapabilities {
 export interface LaunchSessionInput {
   sport: SportId;
   source: TransmissionSource;
+  connection?: SyncedConnectionConfig;
+}
+
+export interface SyncedConnectionConfig {
+  ip: string;
+  port: number;
+  device_id: string;
 }
 
 export interface ManualTransition {

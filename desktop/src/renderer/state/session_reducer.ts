@@ -88,7 +88,7 @@ export function session_reducer(state: SessionState, action: SessionAction): Ses
       if (!generation_matches(state, action.generation) || state.phase !== "active") return state;
       if (state.accepted === null) return { ...state, accepted: action.snapshot };
       if (!same_session(state.accepted, action.snapshot)) return state;
-      if (action.snapshot.scoreboard.revision <= state.accepted.scoreboard.revision) return state;
+      if (action.snapshot.scoreboard.revision < state.accepted.scoreboard.revision) return state;
       return {
         ...state,
         accepted: action.snapshot,

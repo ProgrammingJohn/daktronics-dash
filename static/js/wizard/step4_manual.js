@@ -13,7 +13,12 @@ export const initStep4Manual = async () => {
   const scoreboard = StateHandler.getState("activeScoreboard");
   $(".svg-score").html(scoreboard);
 
-  await startService(scoreboard_name, method);
+  try {
+    await startService(scoreboard_name, method);
+  } catch (error) {
+    $("#manual_service_error").text(error.message).removeAttr("hidden");
+    return;
+  }
 
   $(`#manual_${scoreboard_name}`).show();
   if (scoreboard_name === "baseball") {
