@@ -15,6 +15,18 @@ export interface BackendCommand {
   cwd: string;
 }
 
+export interface LocalServerConfiguration {
+  base_url: string;
+  port: string;
+}
+
+export function local_server_configuration(port = 58321): LocalServerConfiguration {
+  return {
+    base_url: `http://127.0.0.1:${port}`,
+    port: String(port)
+  };
+}
+
 export function backend_command(options: BackendCommandOptions): BackendCommand {
   if (options.is_packaged) {
     return {

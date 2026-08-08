@@ -2,9 +2,9 @@ import { spawn, type ChildProcess } from "node:child_process";
 import process from "node:process";
 import { app, BrowserWindow, dialog } from "electron";
 import { terminate_backend, wait_for_backend } from "./backendProcess.js";
-import { backend_command } from "./runtime.js";
+import { backend_command, local_server_configuration } from "./runtime.js";
 
-const APP_URL = "http://127.0.0.1:5000";
+const LOCAL_SERVER = local_server_configuration();
 
 let backend_process: ChildProcess | null = null;
 let backend_launch_error: Error | null = null;
@@ -31,7 +31,7 @@ function open_operator_window(): BrowserWindow {
   window.on("closed", () => {
     if (operator_window === window) operator_window = null;
   });
-  void window.loadURL(`${APP_URL}/`);
+  void window.loadURL(`${LOCAL_SERVER.base_url}/`);
   return window;
 }
 
@@ -46,7 +46,12 @@ async function start_application(): Promise<void> {
 
   backend_process = spawn(command.executable, command.args, {
     cwd: command.cwd,
-    env: { ...process.env, PYTHONUNBUFFERED: "1" },
+    env: {
+      ...process.env,
+      DAKDASH_DATA_DIR: app.getPath("userData"),
+      DAKDASH_PORT: LOCAL_SERVER.port,
+      PYTHONUNBUFFERED: "1"
+    },
     stdio: ["ignore", "ignore", "pipe"]
   });
   backend_process.once("error", (error) => {
@@ -54,7 +59,7 @@ async function start_application(): Promise<void> {
   });
   backend_process.stderr?.on("data", (chunk: Buffer) => process.stderr.write(chunk));
 
-  await wait_for_backend(APP_URL, {
+  await wait_for_backend(LOCAL_SERVER.base_url, {
     process_alive: () =>
       backend_launch_error === null &&
       backend_process !== null &&
@@ -89,7 +94,7 @@ if (!app.requestSingleInstanceLock()) {
     const message = error instanceof Error ? error.message : String(error);
     dialog.showErrorBox(
       "DakDash could not start",
-      `${message}\n\nCheck that no other application is using port 5000.`
+      `${message}\n\nCheck that no other application is using port ${LOCAL_SERVER.port}.`
     );
     app.quit();
   });

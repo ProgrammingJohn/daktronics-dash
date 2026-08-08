@@ -1,6 +1,8 @@
 import tempfile
 import unittest
+import os
 from pathlib import Path
+from unittest.mock import patch
 
 
 class DesktopBackendTests(unittest.TestCase):
@@ -49,6 +51,14 @@ class DesktopBackendTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("status", response.get_json())
+
+    def test_uses_a_dedicated_port_with_an_environment_override(self):
+        from desktop_backend import server_port
+
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(server_port(), 58321)
+        with patch.dict(os.environ, {"DAKDASH_PORT": "58400"}):
+            self.assertEqual(server_port(), 58400)
 
 
 if __name__ == "__main__":

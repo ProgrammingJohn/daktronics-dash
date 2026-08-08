@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import sys
 
@@ -9,7 +10,7 @@ from routes import register_route_blueprints
 
 
 HOST = "127.0.0.1"
-PORT = 5000
+DEFAULT_PORT = 58321
 
 
 def resource_root() -> Path:
@@ -17,6 +18,10 @@ def resource_root() -> Path:
     if packaged_root is not None:
         return Path(packaged_root)
     return Path(__file__).resolve().parent
+
+
+def server_port() -> int:
+    return int(os.environ.get("DAKDASH_PORT", str(DEFAULT_PORT)))
 
 
 def create_desktop_app(dist_path: Path | None = None) -> Flask:
@@ -48,4 +53,10 @@ app = create_desktop_app()
 
 
 if __name__ == "__main__":
-    app.run(host=HOST, port=PORT, debug=False, use_reloader=False, threaded=True)
+    app.run(
+        host=HOST,
+        port=server_port(),
+        debug=False,
+        use_reloader=False,
+        threaded=True,
+    )

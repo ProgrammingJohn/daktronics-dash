@@ -13,7 +13,7 @@
 - Do not require Apple Developer credentials, signing, or notarization.
 - Do not require Python, Node.js, or Rosetta on the operator's Mac.
 - Bind browser and API traffic to `127.0.0.1` only.
-- Keep the OBS viewer URL stable at `http://127.0.0.1:5000/viewer.html`.
+- Keep the OBS viewer URL stable at `http://127.0.0.1:58321/viewer.html`.
 - Do not change firmware, protocol, parser, supervisor, or connection-state logic.
 - Preserve the one-second viewer polling behavior.
 - Package no credentials or venue-specific network values.
@@ -68,7 +68,7 @@
 
 - [ ] **Step 3: Implement minimal lifecycle helpers and Electron main**
 
-  Spawn only the selected executable, wait for `http://127.0.0.1:5000/api/scoreboard-service/status`, open `http://127.0.0.1:5000/`, keep Node integration disabled with context isolation enabled, enforce a single instance, and terminate the owned child during application quit.
+  Spawn only the selected executable, wait for `http://127.0.0.1:58321/api/scoreboard-service/status`, open `http://127.0.0.1:58321/`, keep Node integration disabled with context isolation enabled, enforce a single instance, and terminate the owned child during application quit.
 
 - [ ] **Step 4: Verify tests and types**
 

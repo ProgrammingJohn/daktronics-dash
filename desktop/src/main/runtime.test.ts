@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { backend_command } from "./runtime";
+import { backend_command, local_server_configuration } from "./runtime";
 
 describe("backend_command", () => {
   test("launches the matching bundled backend in a packaged app", () => {
@@ -38,6 +38,15 @@ describe("backend_command", () => {
       args: ["/work/daktronics-dash/desktop_backend.py"],
       cwd: "/work/daktronics-dash",
       executable: "/work/daktronics-dash/.venv/bin/python"
+    });
+  });
+});
+
+describe("local_server_configuration", () => {
+  test("keeps Electron and the backend on the dedicated OBS port", () => {
+    expect(local_server_configuration()).toEqual({
+      base_url: "http://127.0.0.1:58321",
+      port: "58321"
     });
   });
 });
