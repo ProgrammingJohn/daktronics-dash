@@ -209,6 +209,25 @@
   line-height: 1.55;
 }
 
+.resolvedDevice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.resolvedDevice span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.resolvedDevice strong {
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+}
+
 .discoveryDetails {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -81,6 +81,46 @@ describe("OperatorConsole", () => {
     });
   });
 
+  test("collapses successful discovery to the resolved device IP", async () => {
+    class FoundBackendClient extends FakeBackendClient {
+      override async launch_session(
+        input: LaunchSessionInput,
+        signal?: AbortSignal
+      ): Promise<SessionSnapshot> {
+        const snapshot = await super.launch_session(input, signal);
+        return {
+          ...snapshot,
+          connection: {
+            ...snapshot.connection,
+            discovery: {
+              phase: "FOUND",
+              active: false,
+              attempts: 1,
+              method: "arp_cache",
+              requested_host: null,
+              resolved_host: "10.93.37.138"
+            }
+          }
+        };
+      }
+    }
+
+    render(
+      <SessionProvider client={new FoundBackendClient()}>
+        <App />
+      </SessionProvider>
+    );
+    await screen.findByRole("radio", { name: /Football/i });
+    fill_synced_connection();
+    screen.getByRole("button", { name: "Launch session" }).click();
+
+    expect(await screen.findByRole("region", { name: "Connected device" })).toBeVisible();
+    expect(screen.getByText("Device IP")).toBeVisible();
+    expect(screen.getByText("10.93.37.138")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Device discovery" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Finding scoreboard")).not.toBeInTheDocument();
+  });
+
   test("shows discovery diagnostics with explicit retry and manual-IP recovery", async () => {
     class NotFoundBackendClient extends FakeBackendClient {
       retry_count = 0;

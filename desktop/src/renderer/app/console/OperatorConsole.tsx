@@ -39,6 +39,11 @@ export function OperatorConsole() {
   const source_label = synced ? "Daktronics Sync" : "Manual Control";
   const age = snapshot.connection.source_age_ms;
   const discovery = snapshot.connection.discovery;
+  const show_full_discovery =
+    synced &&
+    discovery !== undefined &&
+    discovery.phase !== "IDLE" &&
+    discovery.phase !== "FOUND";
 
   const discovery_message = (() => {
     if (discovery === undefined) return null;
@@ -113,7 +118,13 @@ export function OperatorConsole() {
         </div>
 
         <aside className={styles.sidebar}>
-          {synced && discovery !== undefined && discovery.phase !== "IDLE" && (
+          {synced && discovery?.phase === "FOUND" && (
+            <section className={`${styles.panel} ${styles.resolvedDevice}`} aria-label="Connected device">
+              <span>Device IP</span>
+              <strong>{discovery.resolved_host ?? "—"}</strong>
+            </section>
+          )}
+          {show_full_discovery && (
             <section className={styles.panel} aria-label="Device discovery">
               <span className={styles.sectionLabel}>Device discovery</span>
               <h2>{discovery.phase === "NOT_FOUND" ? "Device not found" : "Finding scoreboard"}</h2>
