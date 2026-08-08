@@ -2,12 +2,15 @@ import { select_display_snapshot } from "../../state/session_reducer";
 import { use_session } from "../../state/SessionProvider";
 import { get_sport } from "../../sports/registry";
 import { ManualControlDeck } from "../manual/ManualControlDeck";
+import { AppearanceEditor } from "../appearance/AppearanceEditor";
 import { ConnectionBadge } from "./ConnectionBadge";
 import { ProgramPreview } from "./ProgramPreview";
 import styles from "./OperatorConsole.module.css";
 
 export function OperatorConsole() {
   const session = use_session();
+  const [appearance_open, set_appearance_open] = useState(false);
+  const [appearance, set_appearance] = useState<AppearancePayload | undefined>();
   const snapshot = select_display_snapshot(session.state);
   if (snapshot === null) return null;
 
@@ -47,7 +50,7 @@ export function OperatorConsole() {
 
       <div className={styles.layout}>
         <div className={styles.primary}>
-          <ProgramPreview snapshot={snapshot} />
+          <ProgramPreview snapshot={snapshot} appearance={appearance} />
           <section className={styles.metrics} aria-label="Connection summary">
             <div><span>Source age</span><strong>{age === null ? "—" : `${age} ms`}</strong></div>
             <div><span>Revision</span><strong>{snapshot.scoreboard.revision}</strong></div>
@@ -81,10 +84,19 @@ export function OperatorConsole() {
             </dl>
           </details>
 
-          <button className={styles.secondaryButton}>Appearance settings</button>
+          <button className={styles.secondaryButton} onClick={() => set_appearance_open(true)}>Appearance settings</button>
           <button className={styles.dangerButton} onClick={launch_new}>Launch new session…</button>
         </aside>
       </div>
+      {appearance_open && (
+        <AppearanceEditor
+          snapshot={snapshot}
+          on_close={() => set_appearance_open(false)}
+          on_apply={set_appearance}
+        />
+      )}
     </main>
   );
 }
+import { useState } from "react";
+import type { AppearancePayload } from "../../domain/session";

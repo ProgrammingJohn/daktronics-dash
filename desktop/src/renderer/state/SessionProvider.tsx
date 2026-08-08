@@ -12,8 +12,10 @@ import type { BackendClient } from "../api/BackendClient";
 import {
   session_snapshot_schema,
   type LaunchSessionInput,
+  type AppearancePayload,
   type SessionCapabilities,
-  type SessionSnapshot
+  type SessionSnapshot,
+  type SportId
 } from "../domain/session";
 import { get_sport } from "../sports/registry";
 import {
@@ -31,6 +33,8 @@ interface SessionContextValue {
   return_to_sync(): Promise<void>;
   transition(fields: Record<string, unknown>): Promise<void>;
   undo(): Promise<void>;
+  load_appearance(sport: SportId): Promise<AppearancePayload>;
+  save_appearance(payload: AppearancePayload): Promise<AppearancePayload>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -192,6 +196,17 @@ export function SessionProvider({ client, children }: SessionProviderProps) {
     await transition(target.scoreboard.fields);
   }, [transition]);
 
+  const load_appearance = useCallback(
+    (sport: SportId) => client.load_appearance(sport, active_controller_ref.current?.signal),
+    [client]
+  );
+
+  const save_appearance = useCallback(
+    (payload: AppearancePayload) =>
+      client.save_appearance(payload, active_controller_ref.current?.signal),
+    [client]
+  );
+
   const value: SessionContextValue = {
     state,
     capabilities,
@@ -200,7 +215,9 @@ export function SessionProvider({ client, children }: SessionProviderProps) {
     take_manual_control,
     return_to_sync,
     transition,
-    undo
+    undo,
+    load_appearance,
+    save_appearance
   };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

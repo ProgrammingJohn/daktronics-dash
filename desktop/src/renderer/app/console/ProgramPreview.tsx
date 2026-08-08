@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import type { SessionSnapshot } from "../../domain/session";
+import type { AppearancePayload, SessionSnapshot } from "../../domain/session";
 import { ScoreboardRenderer } from "../../scoreboard/ScoreboardRenderer";
 import { sport_svgs } from "../../scoreboard/sport_svgs";
 import { get_sport } from "../../sports/registry";
+import { apply_appearance } from "../appearance/apply_appearance";
 import styles from "./OperatorConsole.module.css";
 
-export function ProgramPreview({ snapshot }: { snapshot: SessionSnapshot }) {
+export function ProgramPreview({ snapshot, appearance }: { snapshot: SessionSnapshot; appearance?: AppearancePayload }) {
   const container_ref = useRef<HTMLDivElement>(null);
   const renderer_ref = useRef<ScoreboardRenderer | null>(null);
   const [error, set_error] = useState<string | null>(null);
@@ -31,11 +32,14 @@ export function ProgramPreview({ snapshot }: { snapshot: SessionSnapshot }) {
       const sport = get_sport(snapshot.session.sport);
       const score = sport.score_schema.parse(snapshot.scoreboard.fields);
       renderer_ref.current?.render(sport.derive_view(score));
+      if (appearance !== undefined && renderer_ref.current !== null) {
+        apply_appearance(renderer_ref.current.shadowRoot, appearance);
+      }
       set_error(null);
     } catch (reason) {
       set_error(reason instanceof Error ? reason.message : "Preview unavailable");
     }
-  }, [snapshot]);
+  }, [snapshot, appearance]);
 
   return (
     <section className={styles.previewCard} aria-label="Program preview">
