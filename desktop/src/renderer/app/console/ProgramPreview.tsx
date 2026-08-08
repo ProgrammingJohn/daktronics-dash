@@ -17,7 +17,7 @@ export function ProgramPreview({ snapshot, appearance }: { snapshot: SessionSnap
   useEffect(() => {
     const host = document.createElement("div");
     host.className = styles.scoreboardHost ?? "";
-    host.style.height = "300px";
+    host.style.height = "180px";
     host.style.overflow = "hidden";
     const renderer = new ScoreboardRenderer(host);
     renderer.mount(sport_svgs[snapshot.session.sport], get_sport(snapshot.session.sport).bindings);

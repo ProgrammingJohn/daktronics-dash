@@ -2,9 +2,14 @@ import { spawn, type ChildProcess } from "node:child_process";
 import process from "node:process";
 import { app, BrowserWindow, dialog } from "electron";
 import { terminate_backend, wait_for_backend } from "./backendProcess.js";
-import { backend_command, local_server_configuration } from "./runtime.js";
+import {
+  backend_command,
+  local_server_configuration,
+  operator_window_configuration
+} from "./runtime.js";
 
 const LOCAL_SERVER = local_server_configuration();
+const OPERATOR_WINDOW = operator_window_configuration();
 
 let backend_process: ChildProcess | null = null;
 let backend_launch_error: Error | null = null;
@@ -13,10 +18,7 @@ let quit_in_progress = false;
 
 function open_operator_window(): BrowserWindow {
   const window = new BrowserWindow({
-    width: 1280,
-    height: 820,
-    minWidth: 1024,
-    minHeight: 700,
+    ...OPERATOR_WINDOW,
     show: false,
     backgroundColor: "#f4f5f7",
     webPreferences: {

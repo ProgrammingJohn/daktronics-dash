@@ -61,7 +61,7 @@ describe("OperatorConsole", () => {
     await waitFor(() => expect(write_text).toHaveBeenCalledWith(viewer_url));
   });
 
-  test("contains the baseball SVG inside the program preview", async () => {
+  test("contains the baseball SVG inside a compact program preview", async () => {
     render(
       <SessionProvider client={new FakeBackendClient()}>
         <App />
@@ -76,7 +76,7 @@ describe("OperatorConsole", () => {
       const host = [...preview.querySelectorAll("div")].find(
         (element) => element.shadowRoot !== null
       );
-      expect(host).toHaveStyle({ height: "300px", overflow: "hidden" });
+      expect(host).toHaveStyle({ height: "180px", overflow: "hidden" });
       expect(host?.shadowRoot?.querySelector("svg")).toBeInTheDocument();
     });
   });

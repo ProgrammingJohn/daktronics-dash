@@ -20,6 +20,22 @@ export interface LocalServerConfiguration {
   port: string;
 }
 
+export interface OperatorWindowConfiguration {
+  width: number;
+  height: number;
+  minWidth: number;
+  minHeight: number;
+}
+
+export function operator_window_configuration(): OperatorWindowConfiguration {
+  return {
+    width: 1100,
+    height: 680,
+    minWidth: 860,
+    minHeight: 520
+  };
+}
+
 export function local_server_configuration(port = 58321): LocalServerConfiguration {
   return {
     base_url: `http://127.0.0.1:${port}`,

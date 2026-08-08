@@ -1,6 +1,10 @@
 import path from "node:path";
 import { describe, expect, test } from "vitest";
-import { backend_command, local_server_configuration } from "./runtime";
+import {
+  backend_command,
+  local_server_configuration,
+  operator_window_configuration
+} from "./runtime";
 
 describe("backend_command", () => {
   test("launches the matching bundled backend in a packaged app", () => {
@@ -47,6 +51,17 @@ describe("local_server_configuration", () => {
     expect(local_server_configuration()).toEqual({
       base_url: "http://127.0.0.1:58321",
       port: "58321"
+    });
+  });
+});
+
+describe("operator_window_configuration", () => {
+  test("opens compactly and permits a smaller operator window", () => {
+    expect(operator_window_configuration()).toEqual({
+      width: 1100,
+      height: 680,
+      minWidth: 860,
+      minHeight: 520
     });
   });
 });
