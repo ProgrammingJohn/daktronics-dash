@@ -87,11 +87,27 @@ export function AppearanceEditor({ snapshot, on_close, on_apply }: AppearanceEdi
               {([["Home", home], ["Away", away]] as const).map(([side, profile]) => (
                 <fieldset key={profile.id}>
                   <legend>{side} team</legend>
-                  <label>{side} name<input aria-label={`${side} name`} value={profile.display_name} onChange={(event) => update_profile(profile.id, "display_name", event.target.value)} /></label>
-                  <label>{side} abbreviation<input aria-label={`${side} abbreviation`} value={profile.abbreviation} onChange={(event) => update_profile(profile.id, "abbreviation", event.target.value)} /></label>
-                  {(["light", "dark", "text"] as const).map((key) => (
-                    <label key={key}>{side} {key} color<input aria-label={`${side} ${key} color`} type="color" value={profile[key]} onChange={(event) => update_profile(profile.id, key, event.target.value)} /></label>
-                  ))}
+                  <label>
+                    Scoreboard title
+                    <input
+                      aria-label={`${side} scoreboard title`}
+                      maxLength={16}
+                      value={profile.abbreviation}
+                      onChange={(event) => update_profile(profile.id, "abbreviation", event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Gradient start
+                    <input aria-label={`${side} gradient start`} type="color" value={profile.light} onChange={(event) => update_profile(profile.id, "light", event.target.value)} />
+                  </label>
+                  <label>
+                    Gradient end
+                    <input aria-label={`${side} gradient end`} type="color" value={profile.dark} onChange={(event) => update_profile(profile.id, "dark", event.target.value)} />
+                  </label>
+                  <label>
+                    Text color
+                    <input aria-label={`${side} text color`} type="color" value={profile.text} onChange={(event) => update_profile(profile.id, "text", event.target.value)} />
+                  </label>
                 </fieldset>
               ))}
             </div>

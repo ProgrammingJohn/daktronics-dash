@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import type { AppearancePayload } from "../../domain/session";
 import { select_display_snapshot } from "../../state/session_reducer";
 import { use_session } from "../../state/SessionProvider";
 import { get_sport } from "../../sports/registry";
@@ -12,6 +14,20 @@ export function OperatorConsole() {
   const [appearance_open, set_appearance_open] = useState(false);
   const [appearance, set_appearance] = useState<AppearancePayload | undefined>();
   const snapshot = select_display_snapshot(session.state);
+  const active_sport = snapshot?.session.sport;
+
+  useEffect(() => {
+    let active = true;
+    if (active_sport === undefined) return;
+    set_appearance(undefined);
+    void session.load_appearance(active_sport).then((payload) => {
+      if (active) set_appearance(payload);
+    });
+    return () => {
+      active = false;
+    };
+  }, [active_sport, session.load_appearance]);
+
   if (snapshot === null) return null;
 
   const sport = get_sport(snapshot.session.sport);
@@ -84,7 +100,7 @@ export function OperatorConsole() {
             </dl>
           </details>
 
-          <button className={styles.secondaryButton} onClick={() => set_appearance_open(true)}>Appearance settings</button>
+          <button className={styles.secondaryButton} onClick={() => set_appearance_open(true)}>Team titles and colors</button>
           <button className={styles.dangerButton} onClick={launch_new}>Launch new session…</button>
         </aside>
       </div>
@@ -98,5 +114,3 @@ export function OperatorConsole() {
     </main>
   );
 }
-import { useState } from "react";
-import type { AppearancePayload } from "../../domain/session";

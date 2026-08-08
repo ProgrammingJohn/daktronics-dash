@@ -23,6 +23,40 @@ describe("OperatorConsole", () => {
     expect(screen.getByText("LIVE")).toBeVisible();
     expect(screen.getByRole("button", { name: "Take manual control…" })).toBeVisible();
     expect(screen.queryByText("Manual controls")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Team titles and colors" })).toBeVisible();
+  });
+
+  test("loads saved team titles and gradients while monitoring a synced session", async () => {
+    const client = new FakeBackendClient();
+    const appearance = await client.load_appearance("football");
+    appearance.profiles[0]!.abbreviation = "DEVILS";
+    appearance.profiles[0]!.light = "#336699";
+    appearance.profiles[0]!.dark = "#112233";
+    await client.save_appearance(appearance);
+    await client.launch_session({ sport: "football", source: "synced" });
+
+    render(
+      <SessionProvider client={client}>
+        <App />
+      </SessionProvider>
+    );
+
+    await screen.findByRole("heading", { name: "Football" });
+    const preview = screen.getByRole("region", { name: "Program preview" });
+    await waitFor(() => {
+      const host = [...preview.querySelectorAll("div")].find(
+        (element) => element.shadowRoot !== null
+      );
+      const root = host?.shadowRoot;
+      expect(root?.querySelector('[data-score-field="home_team_name"]')).toHaveTextContent(
+        "DEVILS"
+      );
+      const svg = root?.querySelector<SVGSVGElement>(
+        '[data-appearance-field="scoreboard_root"]'
+      );
+      expect(svg?.style.getPropertyValue("--home_team_light")).toBe("#336699");
+      expect(svg?.style.getPropertyValue("--home_team_dark")).toBe("#112233");
+    });
   });
 
   test("requires confirmation before returning to the launcher", async () => {
