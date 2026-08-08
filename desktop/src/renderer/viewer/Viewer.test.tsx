@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
-import { describe, expect, test } from "vitest";
-import type { SessionSnapshot } from "../domain/session";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import type { AppearancePayload, SessionSnapshot } from "../domain/session";
 import { basketball_live } from "../sports/basketball/fixtures";
 import { football_live } from "../sports/football/fixtures";
 import { FakeSnapshotSource } from "./fake_snapshot_source";
@@ -43,6 +43,8 @@ function shadow_text(field: string): string | null {
 }
 
 describe("Viewer", () => {
+  afterEach(() => vi.useRealTimers());
+
   test("renders newer revisions and retains the last score after a source error", () => {
     const source = new FakeSnapshotSource();
     render(<Viewer source={source} />);
@@ -95,5 +97,54 @@ describe("Viewer", () => {
 
     expect(source.aborted).toBe(true);
     expect(host.shadowRoot?.childNodes).toHaveLength(0);
+  });
+
+  test("loads and refreshes team colors while the viewer remains open", async () => {
+    vi.useFakeTimers();
+    const source = new FakeSnapshotSource();
+    let home_light = "#336699";
+    const load_appearance = async (): Promise<AppearancePayload> => ({
+      schema_version: 1,
+      sport: "football",
+      profiles: [
+        {
+          id: "football-home",
+          display_name: "Home",
+          abbreviation: "HHS",
+          light: home_light,
+          dark: "#112233",
+          text: "#ffffff"
+        },
+        {
+          id: "football-away",
+          display_name: "Away",
+          abbreviation: "CCS",
+          light: "#dddddd",
+          dark: "#333333",
+          text: "#000000"
+        }
+      ],
+      appearance: {
+        sport: "football",
+        home_profile_id: "football-home",
+        away_profile_id: "football-away",
+        token_overrides: {}
+      }
+    });
+    render(<Viewer source={source} load_appearance={load_appearance} />);
+
+    act(() => source.emit(snapshot("football", football_live, 1)));
+    await act(async () => Promise.resolve());
+    const initial_svg = scoreboard_host().shadowRoot?.querySelector<SVGSVGElement>(
+      '[data-appearance-field="scoreboard_root"]'
+    );
+    expect(initial_svg?.style.getPropertyValue("--home_team_light")).toBe("#336699");
+
+    home_light = "#2b65ad";
+    await act(async () => vi.advanceTimersByTimeAsync(1000));
+    const svg = scoreboard_host().shadowRoot?.querySelector<SVGSVGElement>(
+      '[data-appearance-field="scoreboard_root"]'
+    );
+    expect(svg?.style.getPropertyValue("--home_team_light")).toBe("#2b65ad");
   });
 });

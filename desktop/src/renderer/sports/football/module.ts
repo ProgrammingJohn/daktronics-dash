@@ -55,9 +55,11 @@ export function possession_team(home_possesion: boolean): "home" | "away" {
 
 function timeout_bindings(team: "home" | "away"): SvgBinding<FootballView>[] {
   return [1, 2, 3].map((slot) => ({
-    operation: "visibility" as const,
+    operation: "style" as const,
     selector: `[data-score-field="${team}_timeout_${slot}"]`,
-    visible: (view: FootballView) => view[`${team}_timeouts`][slot - 1] ?? false
+    property: "fill",
+    value: (view: FootballView) =>
+      view[`${team}_timeouts`][slot - 1] ? `var(--${team}_team_text)` : "gray"
   }));
 }
 

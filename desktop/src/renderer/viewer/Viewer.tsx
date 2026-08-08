@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import {
   session_snapshot_schema,
+  type AppearancePayload,
   type ConnectionStatus,
   type SessionSnapshot,
+  type SportId,
 } from "../domain/session";
+import { apply_appearance } from "../app/appearance/apply_appearance";
 import { ScoreboardRenderer } from "../scoreboard/ScoreboardRenderer";
 import { sport_svgs } from "../scoreboard/sport_svgs";
 import { get_sport } from "../sports/registry";
@@ -12,9 +15,13 @@ import "./viewer.css";
 
 export interface ViewerProps {
   source: SnapshotSource;
+  load_appearance?: (
+    sport: SportId,
+    signal?: AbortSignal
+  ) => Promise<AppearancePayload>;
 }
 
-export function Viewer({ source }: ViewerProps) {
+export function Viewer({ source, load_appearance }: ViewerProps) {
   const container_ref = useRef<HTMLDivElement>(null);
   const last_snapshot_ref = useRef<SessionSnapshot | null>(null);
   const [status, set_status] = useState<ConnectionStatus>("disconnected");
@@ -23,6 +30,44 @@ export function Viewer({ source }: ViewerProps) {
     const controller = new AbortController();
     let current_renderer: ScoreboardRenderer | null = null;
     let current_identity: string | null = null;
+    let current_sport: SportId | null = null;
+    let current_appearance: AppearancePayload | null = null;
+    let appearance_loading = false;
+
+    const refresh_appearance = (): void => {
+      if (
+        load_appearance === undefined ||
+        current_sport === null ||
+        appearance_loading ||
+        controller.signal.aborted
+      ) {
+        return;
+      }
+      const requested_sport = current_sport;
+      appearance_loading = true;
+      void load_appearance(requested_sport, controller.signal)
+        .then((payload) => {
+          if (
+            controller.signal.aborted ||
+            current_sport !== requested_sport ||
+            payload.sport !== requested_sport
+          ) {
+            return;
+          }
+          current_appearance = payload;
+          if (current_renderer !== null) {
+            apply_appearance(current_renderer.shadowRoot, payload);
+          }
+        })
+        .catch(() => {
+          // Retain the last valid appearance and retry on the next interval.
+        })
+        .finally(() => {
+          appearance_loading = false;
+        });
+    };
+
+    const appearance_timer = window.setInterval(refresh_appearance, 1000);
 
     source.subscribe(
       controller.signal,
@@ -47,6 +92,8 @@ export function Viewer({ source }: ViewerProps) {
           const view = sport.derive_view(score);
 
           if (identity !== current_identity) {
+            if (current_sport !== snapshot.session.sport) current_appearance = null;
+            current_sport = snapshot.session.sport;
             const next_host = document.createElement("div");
             next_host.dataset.viewerScoreboardHost = "";
             const next_renderer = new ScoreboardRenderer(next_host);
@@ -60,6 +107,10 @@ export function Viewer({ source }: ViewerProps) {
           } else {
             current_renderer?.render(view);
           }
+          if (current_renderer !== null && current_appearance !== null) {
+            apply_appearance(current_renderer.shadowRoot, current_appearance);
+          }
+          refresh_appearance();
 
           last_snapshot_ref.current = snapshot;
           set_status(snapshot.connection.status);
@@ -72,10 +123,11 @@ export function Viewer({ source }: ViewerProps) {
 
     return () => {
       controller.abort();
+      window.clearInterval(appearance_timer);
       current_renderer?.dispose();
       last_snapshot_ref.current = null;
     };
-  }, [source]);
+  }, [source, load_appearance]);
 
   return (
     <main className="viewer">
