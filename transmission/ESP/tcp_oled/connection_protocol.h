@@ -9,6 +9,7 @@ namespace dakdash {
 
 constexpr uint32_t kProtocolVersion = 1;
 constexpr std::size_t kMaxRecordBytes = 4096;
+constexpr std::size_t kMaxDatagramBytes = 1200;
 
 struct ProtocolFields {
   const char* device_id;
@@ -40,5 +41,11 @@ std::size_t encode_heartbeat_json(const ProtocolFields& fields,
                                   std::size_t capacity);
 bool decode_client_hello(const char* json, std::size_t length,
                          char* expected_device_id, std::size_t capacity);
+bool decode_discover_json(const char* json, std::size_t length,
+                          const char* local_device_id, char* nonce,
+                          std::size_t nonce_capacity);
+std::size_t encode_discover_response_json(
+    const ProtocolFields& fields, const char* nonce, const char* ip_address,
+    uint16_t port, char* output, std::size_t capacity);
 
 }  // namespace dakdash

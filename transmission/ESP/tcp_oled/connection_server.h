@@ -4,6 +4,7 @@
 #include <WiFi.h>
 
 #include "connection_protocol.h"
+#include "delivery_cursor.h"
 #include "serial_pipeline.h"
 
 namespace dakdash {
@@ -45,7 +46,6 @@ class ConnectionServer {
   ClientState state_{ClientState::LISTENING};
   uint32_t accepted_ms_{0};
   uint32_t packet_seq_{0};
-  uint32_t last_sent_state_seq_{0};
   uint32_t last_heartbeat_ms_{0};
   String device_id_{};
   String session_id_{};
@@ -55,6 +55,7 @@ class ConnectionServer {
   uint8_t output_[kMaxRecordBytes + 5]{};
   std::size_t output_length_{0};
   std::size_t output_offset_{0};
+  DeliveryCursor delivery_cursor_{};
   HealthMetrics metrics_{};
 };
 

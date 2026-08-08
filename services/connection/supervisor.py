@@ -5,6 +5,7 @@ import socket
 import threading
 import time
 
+from services.connection.discovery import DiscoveryClient
 from services.connection.protocol import MessageType, ProtocolError
 from services.connection.tcp_transport import TcpTransport
 from services.sport_parsers import FrameParseError, parse_scoreboard_frame
@@ -15,7 +16,8 @@ class ConnectionSupervisor(threading.Thread):
 
     def __init__(self, sport, host, port, expected_device_id, store,
                  transport_factory=TcpTransport.connect,
-                 monotonic_ns=time.monotonic_ns):
+                 monotonic_ns=time.monotonic_ns,
+                 discovery_factory=DiscoveryClient):
         super().__init__(name="dakdash-connection", daemon=True)
         self._sport = sport
         self._host = host
@@ -23,13 +25,23 @@ class ConnectionSupervisor(threading.Thread):
         self._expected_device_id = expected_device_id
         self._store = store
         self._transport_factory = transport_factory
+        self._discovery_factory = discovery_factory
         self._monotonic_ns = monotonic_ns
         self._stop_event = threading.Event()
         self._transport_lock = threading.Lock()
         self._transport = None
         self._counter_lock = threading.Lock()
+        self._discovery_lock = threading.Lock()
         self._parse_errors = 0
         self._protocol_errors = 0
+        self._discovery = {
+            "phase": "IDLE",
+            "active": False,
+            "attempts": 0,
+            "method": None,
+            "requested_host": host or None,
+            "resolved_host": None,
+        }
 
     @property
     def parse_errors(self):
@@ -41,6 +53,10 @@ class ConnectionSupervisor(threading.Thread):
         with self._counter_lock:
             return self._protocol_errors
 
+    def discovery_status(self):
+        with self._discovery_lock:
+            return dict(self._discovery)
+
     def run(self):
         delays = (0.25, 0.5, 1.0, 2.0, 5.0)
         backoff_index = 0
@@ -48,19 +64,44 @@ class ConnectionSupervisor(threading.Thread):
         seen_session_ids = set()
         session_packet_seq = None
         session_state_seq = None
+        target_host = self._host or None
+        target_method = "saved_ip" if target_host is not None else None
+        failed_hosts = set()
+        discovery_available = True
+        if target_host is not None:
+            self._record_discovery("DIRECT_CONNECT", 0, None, None)
+        if target_host is None:
+            discovery_available = False
+            result = self._discover_once(set())
+            if result is None:
+                generation = self._store.start_generation()
+                self._store.set_transport(
+                    generation, False, self._monotonic_ns()
+                )
+                self._stop_event.wait()
+                return
+            target_host = result.host
+            target_method = result.method
+            discovery_available = result.method == "arp_cache"
         while not self._stop_event.is_set():
             transport = None
             generation = None
             handshake_complete = False
+            should_discover = False
             try:
                 transport = self._transport_factory(
-                    self._host, self._port, self._expected_device_id
+                    target_host, self._port, self._expected_device_id
                 )
                 self._set_transport(transport)
                 if self._stop_event.is_set():
                     break
                 hello = transport.handshake(timeout_s=2.0)
                 self._validate_hello(hello)
+                discovery_available = False
+                attempts = self.discovery_status()["attempts"]
+                self._record_discovery(
+                    "FOUND", attempts, target_method, target_host
+                )
                 if hello.session_id == current_session_id:
                     if (session_packet_seq is not None and
                             hello.packet_seq <= session_packet_seq):
@@ -98,8 +139,10 @@ class ConnectionSupervisor(threading.Thread):
                     elif envelope.message_type is MessageType.SNAPSHOT:
                         self._store.record_heartbeat(generation, received_ns)
                         if (session_state_seq is not None and
-                                envelope.state_seq <= session_state_seq):
-                            raise ProtocolError("state sequence did not increase")
+                                envelope.state_seq < session_state_seq):
+                            raise ProtocolError("state sequence rolled back")
+                        if envelope.state_seq == session_state_seq:
+                            continue
                         session_state_seq = envelope.state_seq
                         try:
                             score = parse_scoreboard_frame(self._sport, envelope.payload)
@@ -111,10 +154,12 @@ class ConnectionSupervisor(threading.Thread):
                         self._store.record_heartbeat(generation, received_ns)
             except ProtocolError:
                 self._increment("protocol")
+                should_discover = not handshake_complete and discovery_available
                 if not handshake_complete:
                     generation = self._store.start_generation()
                     self._store.mark_incompatible(generation)
             except (OSError, TimeoutError):
+                should_discover = not handshake_complete and discovery_available
                 if generation is None:
                     generation = self._store.start_generation()
                     self._store.set_transport(
@@ -129,11 +174,48 @@ class ConnectionSupervisor(threading.Thread):
                     transport.close()
                 self._clear_transport(transport)
 
+            if should_discover and not self._stop_event.is_set():
+                failed_hosts.add(target_host)
+                discovery_available = False
+                result = self._discover_once(failed_hosts)
+                if result is not None:
+                    target_host = result.host
+                    target_method = result.method
+                    discovery_available = result.method == "arp_cache"
+                    backoff_index = 0
+                    continue
+
             if self._stop_event.is_set():
                 break
             delay = delays[min(backoff_index, len(delays) - 1)]
             backoff_index = min(backoff_index + 1, len(delays) - 1)
             self._stop_event.wait(delay + random.uniform(0, delay * 0.2))
+
+    def _discover_once(self, excluded_hosts):
+        client = self._discovery_factory()
+        return client.discover(
+            self._expected_device_id,
+            excluded_hosts=excluded_hosts,
+            stop_event=self._stop_event,
+            progress=self._record_discovery,
+        )
+
+    def _record_discovery(self, phase, attempts, method, host):
+        with self._discovery_lock:
+            self._discovery["phase"] = phase
+            self._discovery["active"] = phase in {
+                "DIRECT_CONNECT", "PASSIVE_LOOKUP", "BROADCAST_PROBING"
+            }
+            self._discovery["attempts"] = attempts
+            if method is not None:
+                self._discovery["method"] = method
+            if host is not None:
+                self._discovery["resolved_host"] = host
+            if phase in {
+                    "DIRECT_CONNECT", "PASSIVE_LOOKUP",
+                    "BROADCAST_PROBING", "NOT_FOUND"}:
+                self._discovery["method"] = None
+                self._discovery["resolved_host"] = None
 
     def stop(self, timeout_s=2.0):
         self._stop_event.set()

@@ -3,6 +3,7 @@ import time
 import unittest
 from dataclasses import replace
 
+from services.connection.discovery import DiscoveryResult
 from services.connection.protocol import (
     Envelope,
     MessageType,
@@ -98,7 +99,179 @@ class FactorySequence:
         return self._transports[index]
 
 
+class FakeDiscoveryClient:
+    def __init__(self, result=None):
+        self.result = result
+        self.calls = []
+
+    def discover(self, device_id, excluded_hosts=(), stop_event=None,
+                 progress=None):
+        self.calls.append((device_id, set(excluded_hosts)))
+        if progress is not None:
+            progress("PASSIVE_LOOKUP", 0, None, None)
+            if self.result is None:
+                progress("BROADCAST_PROBING", 3, None, None)
+                progress("NOT_FOUND", 3, None, None)
+            else:
+                progress(
+                    "FOUND", 0, self.result.method, self.result.host
+                )
+        return self.result
+
+
+class SequenceDiscoveryClient(FakeDiscoveryClient):
+    def __init__(self, results):
+        super().__init__()
+        self.results = list(results)
+
+    def discover(self, device_id, excluded_hosts=(), stop_event=None,
+                 progress=None):
+        self.result = self.results.pop(0)
+        return super().discover(
+            device_id, excluded_hosts, stop_event, progress
+        )
+
+
 class SupervisorTests(unittest.TestCase):
+    def test_direct_address_is_tried_without_discovery(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient()
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(0.5))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(hosts, ["10.93.37.138"])
+        self.assertEqual(discovery.calls, [])
+        self.assertEqual(diagnostics["phase"], "FOUND")
+        self.assertEqual(diagnostics["method"], "saved_ip")
+
+    def test_failed_direct_address_discovers_once_and_uses_result(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient(DiscoveryResult(
+            "10.93.37.138", 1234, "wt32-aabbccddeeff", "arp_cache"
+        ))
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            if host == "10.93.37.99":
+                raise OSError("unreachable")
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(hosts[:2], ["10.93.37.99", "10.93.37.138"])
+        self.assertEqual(len(discovery.calls), 1)
+        self.assertEqual(discovery.calls[0][1], {"10.93.37.99"})
+        self.assertEqual(diagnostics["phase"], "FOUND")
+        self.assertEqual(diagnostics["method"], "arp_cache")
+        self.assertEqual(diagnostics["resolved_host"], "10.93.37.138")
+
+    def test_missing_address_discovers_before_connecting(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = FakeDiscoveryClient(DiscoveryResult(
+            "10.93.37.138", 1234, "wt32-aabbccddeeff", "udp_broadcast"
+        ))
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", None, 1234, "wt32-aabbccddeeff",
+            LatestStateStore(), transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        supervisor.stop()
+        self.assertEqual(hosts, ["10.93.37.138"])
+        self.assertEqual(len(discovery.calls), 1)
+
+    def test_unanswered_discovery_is_not_repeated(self):
+        discovery = FakeDiscoveryClient()
+        calls = []
+
+        def factory(host, port, device_id):
+            calls.append(host)
+            raise OSError("unreachable")
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.5
+        while len(calls) < 3 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertGreaterEqual(len(calls), 2)
+        self.assertEqual(len(discovery.calls), 1)
+        self.assertEqual(diagnostics["phase"], "NOT_FOUND")
+        self.assertEqual(diagnostics["attempts"], 3)
+
+    def test_stale_arp_candidate_falls_through_to_one_udp_window(self):
+        transport = BlockingFakeTransport()
+        hosts = []
+        discovery = SequenceDiscoveryClient([
+            DiscoveryResult(
+                "10.93.37.137", 1234, "wt32-aabbccddeeff", "arp_cache"
+            ),
+            DiscoveryResult(
+                "10.93.37.138", 1234, "wt32-aabbccddeeff", "udp_broadcast"
+            ),
+        ])
+
+        def factory(host, port, device_id):
+            hosts.append(host)
+            if host != "10.93.37.138":
+                raise OSError("unreachable")
+            return transport
+
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.99", 1234,
+            "wt32-aabbccddeeff", LatestStateStore(),
+            transport_factory=factory,
+            discovery_factory=lambda: discovery,
+        )
+        supervisor.start()
+        self.assertTrue(transport.handshaken.wait(1.0))
+        diagnostics = supervisor.discovery_status()
+        supervisor.stop()
+        self.assertEqual(
+            hosts[:3], ["10.93.37.99", "10.93.37.137", "10.93.37.138"]
+        )
+        self.assertEqual(len(discovery.calls), 2)
+        self.assertEqual(discovery.calls[1][1], {
+            "10.93.37.99", "10.93.37.137"
+        })
+        self.assertEqual(diagnostics["method"], "udp_broadcast")
+        self.assertEqual(diagnostics["resolved_host"], "10.93.37.138")
+
     def test_stop_closes_transport_and_joins_promptly(self):
         transport = BlockingFakeTransport()
         supervisor = ConnectionSupervisor(
@@ -233,6 +406,40 @@ class SupervisorTests(unittest.TestCase):
         self.assertEqual(view.revision, 1)
         self.assertEqual(view.state_seq, 7)
         self.assertGreaterEqual(supervisor.protocol_errors, 1)
+
+    def test_same_session_duplicate_snapshot_is_ignored_on_reconnect(self):
+        payload = b"12:00HOME      GUEST     2233146311<>403339"
+        first = ClosingSequenceFakeTransport(
+            "boot-1", [replace(snapshot(7, payload, "boot-1"), packet_seq=9)]
+        )
+        second = SequenceFakeTransport([
+            replace(snapshot(7, payload, "boot-1"), packet_seq=11),
+            replace(snapshot(8, payload, "boot-1"), packet_seq=12),
+        ])
+
+        def second_handshake(timeout_s):
+            second.handshaken.set()
+            return Envelope(
+                PROTOCOL_VERSION, MessageType.HELLO,
+                "wt32-aabbccddeeff", "boot-1", 10, 0, 100, 9999,
+            )
+
+        second.handshake = second_handshake
+        factory = FactorySequence([first, second])
+        store = LatestStateStore()
+        supervisor = ConnectionSupervisor(
+            "football", "10.93.37.138", 1234, "wt32-aabbccddeeff",
+            store, transport_factory=factory,
+        )
+        supervisor.start()
+        deadline = time.monotonic() + 1.0
+        while store.view(time.monotonic_ns()).revision < 2 and time.monotonic() < deadline:
+            time.sleep(0.005)
+        supervisor.stop()
+        view = store.view(time.monotonic_ns())
+        self.assertEqual(view.revision, 2)
+        self.assertEqual(view.state_seq, 8)
+        self.assertEqual(supervisor.protocol_errors, 0)
 
     def test_socket_timeout_waits_for_three_misses(self):
         import socket

@@ -113,6 +113,12 @@ class ScoreboardRuntime:
         view = self._store.view(time.monotonic_ns())
         with self._lock:
             mode = self._mode
+            supervisor = self._supervisor
+        discovery = _idle_discovery()
+        if supervisor is not None:
+            discovery_status = getattr(supervisor, "discovery_status", None)
+            if discovery_status is not None:
+                discovery = discovery_status()
         return {
             "status": (
                 HealthState.LIVE.value if mode == "manual"
@@ -123,10 +129,22 @@ class ScoreboardRuntime:
             "source": "manual" if mode == "manual" else "daktronics",
             "revision": view.revision,
             "source_age_ms": view.source_age_ms,
+            "discovery": discovery,
         }
 
 
 runtime = ScoreboardRuntime()
+
+
+def _idle_discovery():
+    return {
+        "phase": "IDLE",
+        "active": False,
+        "attempts": 0,
+        "method": None,
+        "requested_host": None,
+        "resolved_host": None,
+    }
 
 
 def _plain_value(value):

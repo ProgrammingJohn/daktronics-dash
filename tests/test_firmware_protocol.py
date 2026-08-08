@@ -71,6 +71,25 @@ class FirmwareProtocolTests(unittest.TestCase):
         )
         self.assertEqual(device_id, "wt32-aabbccddeeff")
 
+    def test_cpp_discovery_response_decodes_with_python_codec(self):
+        body = subprocess.check_output(
+            ["/tmp/dakdash_protocol_vector", "discover-response"]
+        )
+        envelope = decode_envelope(body)
+        self.assertEqual(envelope.message_type, MessageType.DISCOVER_RESPONSE)
+        self.assertEqual(envelope.device_id, "wt32-aabbccddeeff")
+        self.assertEqual(envelope.details, {
+            "nonce": "0011223344556677",
+            "ip": "10.93.37.138",
+            "port": 1234,
+        })
+
+    def test_cpp_discovery_decoder_accepts_python_contract(self):
+        nonce = subprocess.check_output(
+            ["/tmp/dakdash_protocol_vector", "decode-discover"], text=True
+        )
+        self.assertEqual(nonce, "0011223344556677")
+
     def test_protocol_codec_stack_usage_is_bounded(self):
         report = Path("/tmp/dakdash_connection_protocol.su").read_text()
         functions = (
@@ -78,6 +97,8 @@ class FirmwareProtocolTests(unittest.TestCase):
             "encode_hello_json",
             "encode_heartbeat_json",
             "decode_client_hello",
+            "encode_discover_response_json",
+            "decode_discover_json",
         )
         for function in functions:
             line = next(line for line in report.splitlines() if function in line)

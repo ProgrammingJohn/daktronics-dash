@@ -58,8 +58,13 @@ class Envelope:
 
 def encode_tcp_record(envelope: Envelope) -> bytes:
     """Encode an envelope as a length-prefixed TCP record."""
-    body = _encode_envelope(envelope)
+    body = encode_datagram(envelope)
     return struct.pack("!I", len(body)) + body
+
+
+def encode_datagram(envelope: Envelope) -> bytes:
+    """Encode one complete protocol envelope for UDP transport."""
+    return _encode_envelope(envelope)
 
 
 def decode_envelope(body: bytes) -> Envelope:

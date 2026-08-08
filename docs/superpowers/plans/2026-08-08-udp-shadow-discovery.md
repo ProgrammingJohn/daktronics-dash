@@ -4,7 +4,7 @@
 
 **Goal:** Add restrained startup discovery and measure unicast UDP against authoritative TCP on the wired school LAN, with automatic TCP fallback and a reproducible transport report.
 
-**Architecture:** Direct TCP to the reserved address remains first. After failure, the host sends exactly three UDP discovery probes; after TCP handshake it negotiates a UDP destination and receives matching shadow snapshots while continuing to publish TCP state.
+**Architecture:** Direct TCP to the reserved address remains first. After failure, the host checks the passive ARP cache and then sends at most three UDP discovery probes within 500 ms; after TCP handshake it negotiates a UDP destination and receives matching shadow snapshots while continuing to publish TCP state.
 
 **Tech Stack:** Python 3.9 standard library UDP sockets/statistics/JSONL, ESP32 `WiFiUDP`, existing protocol-v1 JSON codec, `unittest`, Arduino CLI, and wired bench fixtures.
 
@@ -12,7 +12,7 @@
 
 - Complete both the host-foundation and ESP32-TCP plans before this plan.
 - Live UDP is unicast to the negotiated Mac address/port; it is never broadcast.
-- Discovery sends at most three probes over approximately three seconds and then stops.
+- Discovery checks passive ARP first, sends at most three probes within 500 ms, and then stops.
 - The DHCP-reserved address and manual IP entry remain functional fallbacks.
 - TCP stays connected and authoritative throughout shadow testing.
 - Accept UDP only for the active TCP-negotiated `device_id`, `session_id`, and nonce.
@@ -119,11 +119,11 @@ class DiscoveryResult:
 
 class DiscoveryClient:
     def __init__(self, socket_factory, nonce_factory=default_nonce,
-                 attempts=3, timeout_s=1.0, port=1234): ...
+                 attempts=3, total_timeout_s=0.5, port=1234): ...
     def discover(self, expected_device_id: str) -> Optional[DiscoveryResult]: ...
 ```
 
-Enable `SO_BROADCAST`, send to `255.255.255.255:1234`, use a fresh 16-hex-character nonce per call, and close the socket in `finally`. Each attempt has a 1-second receive window. Ignore malformed, wrong-version, wrong-type, wrong-device, wrong-nonce, non-unicast-address, and invalid-port replies. Return immediately on the first match; never run a background retry loop.
+Derive the ESP Ethernet MAC from `wt32-<12 hex>` and check `arp -an` before opening UDP. If passive lookup misses, enable `SO_BROADCAST`, send to `255.255.255.255:1234`, use a fresh 16-hex-character nonce per call, and close the socket in `finally`. Divide one 500 ms deadline across at most three attempts. Ignore malformed, wrong-version, wrong-type, wrong-device, wrong-nonce, non-unicast-address, and invalid-port replies. Return immediately on the first match; never run a background retry loop.
 
 - [ ] **Step 4: Run discovery and protocol tests**
 

@@ -20,6 +20,16 @@ class FakeSupervisor:
             self.alive = False
         return self.stop_result
 
+    def discovery_status(self):
+        return {
+            "phase": "FOUND",
+            "active": False,
+            "attempts": 1,
+            "method": "udp_broadcast",
+            "requested_host": None,
+            "resolved_host": "10.93.37.138",
+        }
+
 
 class SupervisorFactory:
     def __init__(self, first_stop_result=True, stop_delay=0.0):
@@ -67,6 +77,22 @@ class RuntimeTests(unittest.TestCase):
         runtime = ScoreboardRuntime()
         self.assertTrue(runtime.start_manual("football"))
         self.assertEqual(runtime.status()["status"], "LIVE")
+        runtime.stop()
+
+    def test_synced_status_exposes_discovery_diagnostics(self):
+        factory = SupervisorFactory()
+        runtime = ScoreboardRuntime(supervisor_factory=factory)
+        self.assertTrue(runtime.start_synced(
+            "football", None, 1234, "wt32-aabbccddeeff"
+        ))
+        self.assertEqual(runtime.status()["discovery"], {
+            "phase": "FOUND",
+            "active": False,
+            "attempts": 1,
+            "method": "udp_broadcast",
+            "requested_host": None,
+            "resolved_host": "10.93.37.138",
+        })
         runtime.stop()
 
 

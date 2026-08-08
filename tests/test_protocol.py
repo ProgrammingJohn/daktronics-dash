@@ -8,6 +8,7 @@ from services.connection.protocol import (
     ProtocolError,
     TcpRecordDecoder,
     decode_envelope,
+    encode_datagram,
     encode_tcp_record,
 )
 
@@ -43,6 +44,13 @@ class ProtocolTests(unittest.TestCase):
         messages = decoder.feed(first[3:] + second)
         self.assertEqual([message.state_seq for message in messages], [7, 8])
         self.assertEqual([message.payload for message in messages], [b"first", b"second"])
+
+    def test_udp_datagram_round_trips_without_tcp_length_prefix(self):
+        datagram = encode_datagram(snapshot(7, b"udp"))
+        self.assertEqual(datagram[:1], b"{")
+        decoded = decode_envelope(datagram)
+        self.assertEqual(decoded.state_seq, 7)
+        self.assertEqual(decoded.payload, b"udp")
 
     def test_rejects_oversized_record_before_buffering_body(self):
         decoder = TcpRecordDecoder()

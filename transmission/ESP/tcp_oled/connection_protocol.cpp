@@ -101,6 +101,19 @@ bool fields_valid(const ProtocolFields& fields) {
   return fields.device_id != nullptr && fields.session_id != nullptr;
 }
 
+bool valid_nonce(const char* nonce) {
+  if (nonce == nullptr || std::strlen(nonce) != 16) return false;
+  for (std::size_t index = 0; index < 16; ++index) {
+    const char value = nonce[index];
+    if (!((value >= '0' && value <= '9') ||
+          (value >= 'a' && value <= 'f') ||
+          (value >= 'A' && value <= 'F'))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 uint32_t crc32(const uint8_t* data, std::size_t length) {
@@ -223,6 +236,53 @@ bool decode_client_hello(const char* json, std::size_t length,
   }
   std::memcpy(expected_device_id, device_id, device_length + 1);
   return true;
+}
+
+bool decode_discover_json(const char* json, std::size_t length,
+                          const char* local_device_id, char* nonce,
+                          std::size_t nonce_capacity) {
+  if (json == nullptr || local_device_id == nullptr || nonce == nullptr ||
+      nonce_capacity < 17 || length > kMaxDatagramBytes) {
+    return false;
+  }
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
+  if (deserializeJson(document, json, length)) return false;
+  if (document["protocol_version"].as<uint32_t>() != kProtocolVersion) {
+    return false;
+  }
+  const char* message_type = document["message_type"];
+  const char* requested_device = document["device_id"];
+  const char* requested_nonce = document["details"]["nonce"];
+  if (message_type == nullptr ||
+      std::strcmp(message_type, "DISCOVER") != 0 ||
+      requested_device == nullptr ||
+      std::strcmp(requested_device, local_device_id) != 0 ||
+      !valid_nonce(requested_nonce)) {
+    return false;
+  }
+  std::memcpy(nonce, requested_nonce, 17);
+  return true;
+}
+
+std::size_t encode_discover_response_json(
+    const ProtocolFields& fields, const char* nonce, const char* ip_address,
+    uint16_t port, char* output, std::size_t capacity) {
+  if (!fields_valid(fields) || !valid_nonce(nonce) ||
+      ip_address == nullptr || ip_address[0] == '\0' || port == 0) {
+    return 0;
+  }
+  json_allocator.reset();
+  JsonDocument document(&json_allocator);
+  add_common_fields(document, "DISCOVER_RESPONSE", fields);
+  document["payload"] = "";
+  document["payload_crc32"] = 0;
+  JsonObject details = document["details"].to<JsonObject>();
+  details["nonce"] = nonce;
+  details["ip"] = ip_address;
+  details["port"] = port;
+  const std::size_t length = serialize_bounded(document, output, capacity);
+  return length <= kMaxDatagramBytes ? length : 0;
 }
 
 }  // namespace dakdash
