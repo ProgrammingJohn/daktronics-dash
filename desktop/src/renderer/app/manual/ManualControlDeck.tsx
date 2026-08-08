@@ -14,10 +14,10 @@ export function ManualControlDeck() {
   const sport = get_sport(snapshot.session.sport);
   const score = sport.score_schema.parse(snapshot.scoreboard.fields);
 
-  const apply = (control: ControlDefinition<any>, input: ControlInput): void => {
+  const apply = (control: ControlDefinition<any>, input: ControlInput): Promise<void> => {
     set_error(null);
     const next = sport.score_schema.parse(control.reduce(score, input));
-    void session.transition(next).catch((reason: unknown) => {
+    return session.transition(next).catch((reason: unknown) => {
       set_error(reason instanceof Error ? reason.message : "Manual update failed");
     });
   };

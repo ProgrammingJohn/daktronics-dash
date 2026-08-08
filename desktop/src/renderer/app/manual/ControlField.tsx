@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { ControlDefinition, ControlInput } from "../../sports/types";
 import styles from "./ManualControlDeck.module.css";
+import { use_game_clock } from "./use_game_clock";
 
 interface ControlFieldProps<TScore> {
   control: ControlDefinition<TScore>;
   score: TScore;
-  on_change(input: ControlInput): void;
+  on_change(input: ControlInput): Promise<void> | void;
 }
 
 function clamp(value: number, min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY): number {
@@ -14,17 +15,6 @@ function clamp(value: number, min = Number.NEGATIVE_INFINITY, max = Number.POSIT
 
 export function ControlField<TScore>({ control, score, on_change }: ControlFieldProps<TScore>) {
   const value = control.value(score);
-  const clock_value =
-    typeof value === "object" ? value : { minutes: 0, seconds: 0 };
-  const [minutes, set_minutes] = useState(clock_value.minutes);
-  const [seconds, set_seconds] = useState(clock_value.seconds);
-
-  useEffect(() => {
-    if (control.kind === "clock" && typeof value === "object") {
-      set_minutes(value.minutes);
-      set_seconds(value.seconds);
-    }
-  }, [control.kind, value]);
 
   if (control.kind === "counter") {
     const numeric = Number(value);
@@ -61,18 +51,43 @@ export function ControlField<TScore>({ control, score, on_change }: ControlField
   }
 
   if (control.kind === "clock") {
-    return (
-      <div className={styles.clockField}>
-        <span className={styles.controlLabel}>{control.label}</span>
-        <div className={styles.clockInputs}>
-          <label>Min<input aria-label={`${control.label} minutes`} type="number" min="0" max="99" value={minutes} onChange={(event) => set_minutes(clamp(Number(event.target.value), 0, 99))} /></label>
-          <span>:</span>
-          <label>Sec<input aria-label={`${control.label} seconds`} type="number" min="0" max="59" value={seconds} onChange={(event) => set_seconds(clamp(Number(event.target.value), 0, 59))} /></label>
-          <button onClick={() => on_change({ minutes, seconds })}>Set clock</button>
-        </div>
-      </div>
-    );
+    const clock = typeof value === "object" ? value : { minutes: 0, seconds: 0 };
+    return <ClockControl label={control.label} clock={clock} on_change={on_change} />;
   }
 
   return <button className={styles.action} onClick={() => on_change(value)}>{control.label}</button>;
+}
+
+function ClockControl({
+  label,
+  clock,
+  on_change
+}: {
+  label: string;
+  clock: { minutes: number; seconds: number };
+  on_change(input: ControlInput): Promise<void> | void;
+}) {
+  const [minutes, set_minutes] = useState(clock.minutes);
+  const [seconds, set_seconds] = useState(clock.seconds);
+  const game_clock = use_game_clock({ clock, on_tick: on_change });
+
+  useEffect(() => {
+    set_minutes(clock.minutes);
+    set_seconds(clock.seconds);
+  }, [clock.minutes, clock.seconds]);
+
+  return (
+    <div className={styles.clockField}>
+      <span className={styles.controlLabel}>{label}</span>
+      <div className={styles.clockInputs}>
+        <label>Min<input aria-label={`${label} minutes`} type="number" min="0" max="99" value={minutes} onChange={(event) => set_minutes(clamp(Number(event.target.value), 0, 99))} /></label>
+        <span>:</span>
+        <label>Sec<input aria-label={`${label} seconds`} type="number" min="0" max="59" value={seconds} onChange={(event) => set_seconds(clamp(Number(event.target.value), 0, 59))} /></label>
+        <button onClick={() => on_change({ minutes, seconds })}>Set clock</button>
+        <button onClick={game_clock.running ? game_clock.stop : game_clock.start}>
+          {game_clock.running ? "Stop clock" : "Start clock"}
+        </button>
+      </div>
+    </div>
+  );
 }
