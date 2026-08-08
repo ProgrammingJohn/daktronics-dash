@@ -3,7 +3,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from flask import Blueprint, render_template, request, jsonify
 from services.service_service import scoreboards, load_scoreboard, update_scoreboard_preferences, scoreboard_modes
 from services.utils import get_scoreboard_preferences
-from services.service_service import active_thread, ScoreboardService
+from services.runtime import runtime
 
 api_bp = Blueprint('api', __name__)
 
@@ -46,9 +46,7 @@ def update_scoreboard():
 
 @api_bp.route("/api/scoreboard-service/start", methods=["POST"])
 def start_service():
-    global active_thread
-    # Start the scoreboard service
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     scoreboard_name = data.get('scoreboard')
     method = data.get('method')
     ip = data.get('ip')
@@ -57,56 +55,53 @@ def start_service():
         return jsonify({'message': 'Scoreboard name is required', 'data': None}), 400
     if not method:
         return jsonify({'message': 'Method is required', 'data': None}), 400
-    
-    if active_thread is not None:
-        active_thread.stop()
-        if active_thread.is_alive():
-            active_thread.join()
-        active_thread = None
-
-    active_thread = ScoreboardService(
-        scoreboard_name=scoreboard_name, 
-        is_dakdash_synced = False if method == 'manual' else True, 
-        ip=ip if ip else None, 
-        port=port if port else None
-    )
-    active_thread.start()
+    if method == 'manual':
+        runtime.start_manual(scoreboard_name)
+    elif method == 'synced':
+        device_id = data.get('device_id')
+        if not ip:
+            return jsonify({'error': 'IP address is required'}), 400
+        if not port:
+            return jsonify({'error': 'Port is required'}), 400
+        if not device_id:
+            return jsonify({'error': 'Device ID is required'}), 400
+        runtime.start_synced(scoreboard_name, ip, port, device_id)
+    else:
+        return jsonify({'error': 'Unsupported method'}), 400
     return jsonify({"message": "Started"}), 200
 
 @api_bp.route('/api/scoreboard-service/update-score', methods=['POST'])
 def update_score():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     scoreboard_data = data.get('score')
     
     if not scoreboard_data:
         return jsonify({"error": "Missing scoreboard_data"}), 400
     
-    if not active_thread.is_dakdash_synced:
-        active_thread.update_scoreboard_data(scoreboard_data)
+    if not runtime.is_running():
+        return jsonify({"error": "Scoreboard service is not running"}), 409
+    if runtime.is_manual():
+        runtime.update_manual(scoreboard_data)
         return jsonify({"message": "Score updated manually"})
     
     return jsonify({"error": "Live sync is enabled, cannot update manually"}), 403
 
 @api_bp.route('/api/scoreboard-service/get-score', methods=['GET'])
 def get_score():
-    global active_thread
-    if active_thread is None or not active_thread.running:
-        return jsonify({"error": "Scoreboard service is not running"}), 403
-    data = active_thread.get_scoreboard_data()
+    data = runtime.score()
+    if data is None:
+        return jsonify({"error": "Scoreboard service is not running"}), 409
     return jsonify(data)
 
 @api_bp.route('/api/scoreboard-service/get-scoreboard-name', methods=['GET'])
 def get_scoreboard_name():
-    global active_thread
-    if active_thread is None or not active_thread.running:
-        return jsonify({"error": "Scoreboard service is not running"}), 403
-    data = {"scoreboard_name": active_thread.scoreboard_name}
+    scoreboard_name = runtime.scoreboard_name()
+    if scoreboard_name is None:
+        return jsonify({"error": "Scoreboard service is not running"}), 409
+    data = {"scoreboard_name": scoreboard_name}
     return jsonify(data)
 
 
 @api_bp.route('/api/scoreboard-service/status', methods=['GET'])
 def get_status():
-    global active_thread
-    if active_thread is None:
-        return jsonify({"status": "stopped"})
-    return jsonify({"status": active_thread.get_status()})
+    return jsonify(runtime.status())
