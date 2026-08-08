@@ -154,6 +154,20 @@ std::size_t encode_snapshot_json(const ProtocolFields& fields,
   return serialize_bounded(document, output, capacity);
 }
 
+std::size_t encode_hello_json(const ProtocolFields& fields, char* output,
+                              std::size_t capacity) {
+  if (!fields_valid(fields)) {
+    return 0;
+  }
+  FixedAllocator<kMaxRecordBytes> allocator;
+  JsonDocument document(&allocator);
+  add_common_fields(document, "HELLO", fields);
+  document["payload"] = "";
+  document["payload_crc32"] = 0;
+  document["details"].to<JsonObject>();
+  return serialize_bounded(document, output, capacity);
+}
+
 std::size_t encode_heartbeat_json(const ProtocolFields& fields,
                                   const HealthMetrics& metrics, char* output,
                                   std::size_t capacity) {

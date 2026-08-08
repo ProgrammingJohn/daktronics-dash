@@ -29,7 +29,9 @@ int main(int argc, char** argv) {
   ProtocolFields fields{"wt32-aabbccddeeff", "boot-1234", 9, 7, 2500, 4};
   char output[2048]{};
   std::size_t length = 0;
-  if (mode == "heartbeat") {
+  if (mode == "hello") {
+    length = dakdash::encode_hello_json(fields, output, sizeof(output));
+  } else if (mode == "heartbeat") {
     HealthMetrics metrics{100, 2, 3, 4, 5};
     length = dakdash::encode_heartbeat_json(fields, metrics, output,
                                              sizeof(output));

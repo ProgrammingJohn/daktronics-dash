@@ -41,6 +41,13 @@ class FirmwareProtocolTests(unittest.TestCase):
         self.assertEqual(envelope.details["uart_bytes"], 100)
         self.assertEqual(envelope.details["tcp_write_failures"], 5)
 
+    def test_cpp_hello_decodes_with_python_codec(self):
+        body = subprocess.check_output(["/tmp/dakdash_protocol_vector", "hello"])
+        envelope = decode_envelope(body)
+        self.assertEqual(envelope.message_type, MessageType.HELLO)
+        self.assertEqual(envelope.device_id, "wt32-aabbccddeeff")
+        self.assertEqual(envelope.session_id, "boot-1234")
+
     def test_cpp_decoder_reads_expected_device_from_client_hello(self):
         device_id = subprocess.check_output(
             ["/tmp/dakdash_protocol_vector", "decode"], text=True

@@ -33,6 +33,8 @@ std::size_t base64_encode(const uint8_t* data, std::size_t length,
 std::size_t encode_snapshot_json(const ProtocolFields& fields,
                                  const CompletedFrame& frame, char* output,
                                  std::size_t capacity);
+std::size_t encode_hello_json(const ProtocolFields& fields, char* output,
+                              std::size_t capacity);
 std::size_t encode_heartbeat_json(const ProtocolFields& fields,
                                   const HealthMetrics& metrics, char* output,
                                   std::size_t capacity);
