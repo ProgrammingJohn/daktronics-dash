@@ -4,16 +4,7 @@ Daktronics Dash is a simple Flask based tool for broadcasting sports scores.
 It supports manual scoring through a web UI and can sync with a Daktronics
 controller via an ESP32.
 
-<!--
-Screenshot slot: Operator console
-Capture the complete application window with representative teams, scores, and
-a LIVE connection state. Use a wide crop and hide personal or venue-specific data.
-Save the image as docs/images/operator-console.png, then replace this comment with:
-
 ![DakDash operator console showing a live scoreboard](docs/images/operator-console.png)
-
-_Configure the scoreboard, connection, and broadcast appearance from one console._
--->
 
 ## Live score transport
 
@@ -22,17 +13,8 @@ device frames the incoming data, retains the newest complete payload, and relays
 it to the desktop application over TCP port `1234`, where sport-specific parsing
 and scoreboard state updates occur.
 
-<!--
-Screenshot slot: ESP32 hardware setup
-Photograph the ESP32, serial connection, Ethernet connection, and scoreboard
-controller together. Use a clean background and keep credentials and venue network
-details out of frame. Save the image as docs/images/esp32-hardware.png, then replace
-this comment with:
 
-![ESP32 connected between a Daktronics controller and the DakDash network](docs/images/esp32-hardware.png)
-
-_The ESP32 bridges the Daktronics serial feed to DakDash over the local network._
--->
+![ESP32 connected between a Daktronics controller and the DakDash network](docs/images/esp32-hardware-basic.png)
 
 ## Running
 
@@ -60,17 +42,7 @@ one local application. It keeps the OBS viewer available at:
 ```text
 http://127.0.0.1:58321/viewer
 ```
-
-<!--
-Screenshot slot: OBS scoreboard output
-Capture the clean scoreboard graphic over representative video or a neutral preview.
-Hide browser controls and use a 16:9 crop. Save the image as
-docs/images/obs-scoreboard.png, then replace this comment with:
-
-![DakDash scoreboard graphic displayed in OBS](docs/images/obs-scoreboard.png)
-
-_Use the dedicated viewer URL as a browser source in OBS._
--->
+![DakDash scoreboard graphic displayed in OBS](docs/images/scoreboard.png)
 
 Run an unpackaged development build with:
 

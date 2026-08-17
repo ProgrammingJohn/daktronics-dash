@@ -8,3 +8,5 @@ electron
 .worktrees/
 /.build/
 /release/
+.superpowers
+.DS_Store
