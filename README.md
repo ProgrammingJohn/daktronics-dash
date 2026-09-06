@@ -42,7 +42,8 @@ one local application. It keeps the OBS viewer available at:
 ```text
 http://127.0.0.1:58321/viewer
 ```
-![DakDash scoreboard graphic displayed in OBS](docs/images/scoreboard.png)
+![DakDash scoreboard graphic](docs/images/scoreboard.png)
+![DakDash scoreboard graphic displayed in OBS](docs/images/running-in-obs.png)
 
 Run an unpackaged development build with:
 
